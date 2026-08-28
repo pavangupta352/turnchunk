@@ -56,6 +56,11 @@ jobs:
           name: dist
           path: dist/
       - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          # Makes the release re-runnable. Without this, a re-run after a
+          # failure elsewhere in the workflow dies here on "version exists",
+          # which is exactly when you most want to re-run it.
+          skip-existing: true
 
   publish-npm:
     needs: build
