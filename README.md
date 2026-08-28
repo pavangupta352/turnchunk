@@ -7,7 +7,8 @@
 </p>
 
 <p align="center">
-  <a href="https://pypi.org/project/turnchunk/"><img alt="PyPI" src="https://img.shields.io/pypi/v/turnchunk?color=2563eb"></a>
+  <a href="https://pypi.org/project/turnchunk/"><img alt="PyPI" src="https://img.shields.io/pypi/v/turnchunk?color=2563eb&label=pypi"></a>
+  <a href="https://www.npmjs.com/package/turnchunk"><img alt="npm" src="https://img.shields.io/npm/v/turnchunk?color=2563eb&label=npm"></a>
   <a href="https://pypi.org/project/turnchunk/"><img alt="Python" src="https://img.shields.io/pypi/pyversions/turnchunk"></a>
   <img alt="Dependencies" src="https://img.shields.io/badge/dependencies-0-2563eb">
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-MIT-2563eb"></a>
@@ -51,11 +52,12 @@ what the tool actually prints.
 ## Install
 
 ```bash
-pip install turnchunk
+pip install turnchunk        # Python 3.9+
+npm install turnchunk        # Node 18+, browsers, Deno, Bun, edge runtimes
 ```
 
-Zero dependencies. Installs in under a second, runs on Python 3.9+, in a Lambda,
-on a Raspberry Pi, inside an air-gapped network.
+Zero dependencies in both. Installs in under a second, runs in a Lambda, on a
+Raspberry Pi, inside an air-gapped network.
 
 ## 30 seconds
 
@@ -68,6 +70,29 @@ chunks = chunk(turns, target=2000, overlap=200)
 for c in chunks:
     print(c.primary_speaker, c.start_ms, c.text[:80])
 ```
+
+```ts
+import { parse, chunk } from "turnchunk";
+
+const turns  = parse(vttText);         // format auto-detected from content
+const chunks = chunk(turns, { target: 2000, overlap: 200 });
+
+for (const c of chunks) {
+  console.log(c.primarySpeaker, c.startMs, c.text.slice(0, 80));
+}
+```
+
+**The two implementations are provably identical.** Not "ported carefully" --
+verified. `tests/corpus/conformance.json` is generated from the Python
+implementation and both test suites assert against it, down to the SHA-256
+chunk ids:
+
+```
+PY : 84145dc64967320e Alice Chen    ebb887b32ecae650 Bob Ferreira
+TS : 84145dc64967320e Alice Chen    ebb887b32ecae650 Bob Ferreira
+```
+
+CI fails if regenerating the corpus produces a diff, so the two cannot drift.
 
 Every chunk carries what you need to cite it:
 

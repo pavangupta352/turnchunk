@@ -49,6 +49,24 @@ produce. There is a test for it; do not weaken it.
 **Timestamps that aren't known stay `None`.** Never `0`. Callers have to be able
 to tell "at the start" from "we don't know".
 
+## The two implementations must stay identical
+
+`js/` is a port of the Python package, and they are held together by
+`tests/corpus/conformance.json` -- generated from Python, checked in, and
+asserted against by both test suites down to the SHA-256 chunk ids.
+
+If you change behaviour in one language, you must change it in the other:
+
+```bash
+python scripts/build_corpus.py    # regenerate after a deliberate change
+pytest                            # Python must match
+cd js && npm test                 # TypeScript must match
+```
+
+CI fails if regenerating produces a diff, because that means the two languages
+have silently drifted. Review any corpus diff carefully -- an unexplained one is
+a behaviour change nobody intended.
+
 ## Tests
 
 New behaviour needs a test. New format support needs a fixture.

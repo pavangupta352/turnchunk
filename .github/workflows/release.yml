@@ -44,7 +44,7 @@ jobs:
           name: dist
           path: dist/
 
-  publish:
+  publish-pypi:
     needs: build
     runs-on: ubuntu-latest
     environment: pypi
@@ -57,8 +57,33 @@ jobs:
           path: dist/
       - uses: pypa/gh-action-pypi-publish@release/v1
 
+  publish-npm:
+    needs: build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: js
+    permissions:
+      id-token: write        # npm Trusted Publishing, same as PyPI: no token
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
+      - run: npm install
+      - run: npm run build
+      - name: Check the tag matches package.json
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          PKG=$(node -p "require('./package.json').version")
+          echo "tag=$TAG package=$PKG"
+          [ "$TAG" = "$PKG" ] || { echo "::error::tag $TAG != version $PKG"; exit 1; }
+        if: startsWith(github.ref, 'refs/tags/v')
+      - run: npm publish --provenance --access public
+
   github-release:
-    needs: publish
+    needs: [publish-pypi, publish-npm]
     runs-on: ubuntu-latest
     permissions:
       contents: write
