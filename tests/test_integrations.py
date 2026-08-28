@@ -6,6 +6,8 @@ actionable message only when actually used.
 
 from __future__ import annotations
 
+import importlib
+
 import pytest
 
 from turnchunk.integrations.chonkie import ConversationChunker
@@ -39,23 +41,37 @@ def test_adapters_import_without_their_framework():
     TurnChunkNodeParser(chunk_size=100)
 
 
-def test_langchain_adapter_errors_clearly_when_unavailable():
+def _importable(module: str) -> bool:
+    """Can this framework actually be imported here?
+
+    Not just "is it installed": llama-index-core is installable on Python 3.9
+    but raises TypeError on import, because a transitive dependency uses PEP 604
+    syntax. Any failure means unavailable.
+    """
     try:
-        import langchain_core  # noqa: F401
-    except ImportError:
+        importlib.import_module(module)
+    except Exception:
+        return False
+    return True
+
+
+def test_langchain_adapter_produces_real_documents_or_a_clean_error():
+    if _importable("langchain_core"):
+        docs = TurnChunkSplitter(chunk_size=400).split_transcript(EXAMPLE)
+        assert type(docs[0]).__name__ == "Document"
+        assert docs[0].metadata["speaker"] == "Priya Raman"
+        assert docs[0].metadata["start_ms"] is not None
+    else:
         with pytest.raises(ImportError, match="LangChain is not installed"):
             TurnChunkSplitter().split_transcript(EXAMPLE)
+
+
+def test_llamaindex_adapter_produces_real_nodes_or_a_clean_error():
+    if _importable("llama_index.core"):
+        nodes = TurnChunkNodeParser(chunk_size=400).parse_transcript(EXAMPLE)
+        assert type(nodes[0]).__name__ == "TextNode"
+        assert nodes[0].metadata["speaker"] == "Priya Raman"
     else:
-        docs = TurnChunkSplitter(chunk_size=400).split_transcript(EXAMPLE)
-        assert docs[0].metadata["speaker"] == "Priya Raman"
-
-
-def test_llamaindex_adapter_errors_clearly_when_unavailable():
-    try:
-        import llama_index.core  # noqa: F401
-    except ImportError:
+        # Whatever the framework raises, the adapter must surface ImportError.
         with pytest.raises(ImportError, match="LlamaIndex is not installed"):
             TurnChunkNodeParser().parse_transcript(EXAMPLE)
-    else:
-        nodes = TurnChunkNodeParser(chunk_size=400).parse_transcript(EXAMPLE)
-        assert nodes[0].metadata["speaker"] == "Priya Raman"

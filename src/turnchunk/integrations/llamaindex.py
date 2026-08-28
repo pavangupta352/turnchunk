@@ -18,14 +18,14 @@ from .langchain import chunk_to_metadata
 def _TextNode():
     try:
         from llama_index.core.schema import TextNode  # type: ignore
-    except ImportError:  # pragma: no cover
+    except Exception:  # pragma: no cover
         try:
             from llama_index.schema import TextNode  # type: ignore
-        except ImportError:
+        except Exception as exc:
             raise ImportError(
                 "LlamaIndex is not installed. `pip install llama-index-core` to use "
                 "this adapter, or use turnchunk.chunk() directly."
-            ) from None
+            ) from exc
     return TextNode
 
 

@@ -21,14 +21,14 @@ from ..speakers import resolve_speakers
 def _Document():
     try:
         from langchain_core.documents import Document  # type: ignore
-    except ImportError:  # pragma: no cover - exercised only without langchain
+    except Exception:  # pragma: no cover - exercised only without the framework
         try:
             from langchain.schema import Document  # type: ignore
-        except ImportError:
+        except Exception as exc:
             raise ImportError(
                 "LangChain is not installed. `pip install langchain-core` to use "
                 "this adapter, or use turnchunk.chunk() directly."
-            ) from None
+            ) from exc
     return Document
 
 

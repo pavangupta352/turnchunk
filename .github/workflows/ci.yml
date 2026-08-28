@@ -61,7 +61,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-      - run: npm install
+      - run: npm ci
       - run: npx tsc --noEmit
       - run: npm run build
       # The conformance suite asserts the port is byte-identical to the Python
