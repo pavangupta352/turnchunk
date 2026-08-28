@@ -71,6 +71,24 @@ jobs:
         with:
           node-version: "22"
           registry-url: "https://registry.npmjs.org"
+      # Node 22 ships npm 10.x, which has no OIDC support at all. Trusted
+      # publishing needs npm >= 11.5.1, and without it the registry answers a
+      # PUT with 404 rather than 401 -- so the failure looks like a missing
+      # package instead of a failed login.
+      - name: Upgrade npm for trusted publishing
+        run: npm install -g npm@latest
+      - name: Show npm version
+        run: npm --version
+      # setup-node writes an _authToken line into .npmrc referencing
+      # NODE_AUTH_TOKEN. With no token secret set that resolves to a
+      # placeholder, and an invalid token beats OIDC. Drop it so npm falls
+      # through to the trusted publisher.
+      - name: Remove the placeholder auth token so OIDC is used
+        run: |
+          if [ -f "$NPM_CONFIG_USERCONFIG" ]; then
+            sed -i '/_authToken/d' "$NPM_CONFIG_USERCONFIG"
+            echo "cleaned $NPM_CONFIG_USERCONFIG"
+          fi
       - run: npm install
       - run: npm run build
       - name: Check the tag matches package.json
