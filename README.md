@@ -123,17 +123,26 @@ saved with the wrong suffix.
 | **AssemblyAI** | `utterances` or `words` — **milliseconds**, not seconds |
 | **Rev.ai** | `monologues` with punctuation elements |
 | **Speechmatics** | `results` with per-word speakers |
+| **AWS Transcribe** | `items` joined to `speaker_labels` segments — times are **strings** |
+| **Google Cloud STT** | word lists with `"1.500s"` times and `speakerTag`, cumulative results de-duplicated |
+| **Azure Speech** | `recognizedPhrases` — **100-nanosecond ticks**, not seconds |
 | **Anything else** | any list of `{speaker, text, start, end}` objects |
 
-Three of these are quietly hostile:
+Several of these are quietly hostile:
 
 - **YouTube auto-captions scroll.** Each cue repeats the previous cue's tail.
   Concatenate them naively and most of your transcript appears two or three
   times, silently doubling your index. turnchunk detects the overlap and reports
   how many cues it removed.
-- **AssemblyAI uses milliseconds while everyone else uses seconds.** Read it
-  wrong and the text is perfect while every citation points at the wrong moment,
-  forever.
+- **Every vendor encodes time differently, and each is a way to be silently
+  wrong.** AssemblyAI emits integer milliseconds, AWS writes seconds as
+  *strings*, Google appends an `"s"` suffix, and Azure counts 100-nanosecond
+  ticks. Read any of them as plain seconds and the text is perfect while every
+  citation points at the wrong moment, forever.
+- **Google's diarized results are cumulative** — the final result repeats every
+  word. Concatenate them and you get the transcript two or three times over.
+- **AWS keeps diarization in a separate list**, addressed by time range rather
+  than attached to the words, and its punctuation items carry no speaker at all.
 - **A cue is not a turn.** Subtitle cues break every few seconds for *display*.
   Chunking on cues instead of turns makes speaker-aware chunking pointless, so
   `parse()` merges consecutive same-speaker cues into real turns.
@@ -283,8 +292,8 @@ leak a literal `<i>` into the chunk text, and was only ever going to be found by
 running a real file through it.
 
 ```bash
-pip install -e ".[dev]" && pytest      # 131 Python tests
-cd js && npm ci && npm test            # 75 TypeScript conformance tests
+pip install -e ".[dev]" && pytest      # 144 Python tests
+cd js && npm ci && npm test            # 87 TypeScript conformance tests
 ```
 
 ## Scope

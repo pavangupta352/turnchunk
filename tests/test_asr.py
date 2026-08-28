@@ -103,3 +103,70 @@ def test_unrecognised_json_raises():
 def test_json_is_never_mistaken_for_plain_text():
     from turnchunk import detect_format
     assert detect_format(open(FIX + "whisperx_diarized.json").read()) == "json"
+
+
+# ------------------------------------------------------- cloud providers ----
+#
+# Every major cloud STT encodes time differently, and each is a distinct way to
+# be silently wrong: AWS writes seconds as strings, Google appends an "s"
+# suffix, Azure counts 100-nanosecond ticks. The text survives a mistake here;
+# the citations do not.
+
+
+def test_aws_transcribe_joins_speaker_labels_to_items():
+    """AWS keeps diarization in a separate segment list, addressed by time."""
+    t = parse(FIX + "aws_transcribe.json")
+    assert t.format == "json:aws"
+    assert t.speakers == ["spk_0", "spk_1"]
+    assert t.turns[0].text == "Hello there."
+    assert t.turns[1].text == "How are you?"
+    # "0.5" is a string in the source; it must still become 500 ms.
+    assert t.turns[0].start_ms == 500 and t.turns[0].end_ms == 1400
+
+
+def test_aws_punctuation_attaches_without_its_own_speaker():
+    """Punctuation items carry no speaker label and must not split a turn."""
+    t = parse(FIX + "aws_transcribe.json")
+    assert len(t) == 2, "punctuation should not create extra turns"
+    assert t.turns[0].text.endswith(".")
+
+
+def test_google_stt_parses_suffixed_times_and_speaker_tags():
+    t = parse(FIX + "google_stt.json")
+    assert t.format == "json:google"
+    assert t.turns[0].start_ms == 500, '"0.500s" must parse to 500 ms'
+    assert t.turns[1].text == "How are you"
+    assert t.speakers == ["SPEAKER_01", "SPEAKER_02"]
+
+
+def test_google_cumulative_results_are_not_duplicated():
+    """Google repeats the whole transcript in its final diarized result."""
+    t = parse(FIX + "google_stt.json")
+    joined = " ".join(x.text for x in t.turns)
+    assert joined.count("Hello there") == 1
+
+
+def test_google_protobuf_duration_objects():
+    payload = json.dumps({"results": [{"alternatives": [{"transcript": "hi", "words": [
+        {"startTime": {"seconds": 1, "nanos": 500000000}, "endTime": {"seconds": 2},
+         "word": "hi", "speakerTag": 1}]}]}]})
+    t = parse_asr_json(payload)
+    assert t.turns[0].start_ms == 1500
+
+
+def test_azure_ticks_convert_to_milliseconds():
+    """Azure counts 100-nanosecond ticks: 5,000,000 ticks is 500 ms."""
+    t = parse(FIX + "azure_speech.json")
+    assert t.format == "json:azure"
+    assert t.turns[0].start_ms == 500
+    assert t.turns[0].end_ms == 1400
+    assert t.turns[0].text == "Hello there."
+
+
+def test_google_is_not_mistaken_for_speechmatics():
+    """Both use results[].alternatives; the shape inside must disambiguate."""
+    assert parse(FIX + "google_stt.json").meta["vendor"] == "google"
+    speechmatics = json.dumps({"results": [
+        {"start_time": 0.5, "end_time": 0.9, "type": "word",
+         "alternatives": [{"content": "Hello", "speaker": "S1"}]}]})
+    assert parse_asr_json(speechmatics).meta["vendor"] == "speechmatics"

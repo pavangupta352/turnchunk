@@ -15,7 +15,14 @@ Supported, detected from the payload rather than the filename:
 * AssemblyAI (``utterances[]`` / ``words[]``, milliseconds)
 * Rev.ai (``monologues[].elements[]``)
 * Speechmatics (``results[]`` with ``alternatives[].speaker``)
+* AWS Transcribe (``results.items`` + ``results.speaker_labels``, times as strings)
+* Google Cloud STT (``results[].alternatives[].words`` with ``"1.500s"`` times)
+* Azure Speech batch (``recognizedPhrases`` with 100-nanosecond ticks)
 * A generic fallback for any list of ``{speaker, text, start, end}`` objects
+
+Each cloud vendor encodes time differently, and every one of them is a way to
+be silently wrong: AWS writes seconds as *strings*, Google appends an ``s``
+suffix, and Azure counts 100-nanosecond ticks.
 """
 
 from __future__ import annotations
@@ -45,12 +52,25 @@ def _identify(data: Any) -> Optional[str]:
         return None
     if "monologues" in data:
         return "rev"
+    if "recognizedPhrases" in data or "combinedRecognizedPhrases" in data:
+        return "azure"
     results = data.get("results")
     if isinstance(results, dict) and "channels" in results:
         return "deepgram"
-    if isinstance(results, list) and results and isinstance(results[0], dict) \
-            and "alternatives" in results[0]:
-        return "speechmatics"
+    if isinstance(results, dict) and ("speaker_labels" in results or "items" in results):
+        return "aws"
+    if isinstance(results, list) and results and isinstance(results[0], dict):
+        # Google and Speechmatics both use results[].alternatives, so the
+        # discriminator is what is *inside* an alternative: Google carries a
+        # transcript and word list, Speechmatics a single token's content.
+        first = results[0]
+        alts = first.get("alternatives")
+        if isinstance(alts, list) and alts and isinstance(alts[0], dict):
+            alt = alts[0]
+            if "words" in alt or "transcript" in alt:
+                return "google"
+            if "content" in alt or "start_time" in first:
+                return "speechmatics"
     if "utterances" in data and isinstance(data["utterances"], list):
         # AssemblyAI has a top-level utterances[] alongside words[] in ms.
         return "assemblyai" if "words" in data or "id" in data else "generic_dict"
@@ -286,12 +306,153 @@ def _group_words(words, *, text_key, to_ms, fallback_key=None, join_punct=False)
     return [t for t in out if t.text]
 
 
+def _from_aws(data: Dict[str, Any]) -> List[Turn]:
+    """AWS Transcribe.
+
+    Times arrive as *strings* (``"12.34"``), and with diarization enabled the
+    speaker lives on ``results.speaker_labels.segments`` rather than on the
+    items themselves -- newer output also copies it onto each item, so prefer
+    that and fall back to a time-range lookup.
+    """
+    results = data.get("results") or {}
+    items = results.get("items") or []
+
+    segments = ((results.get("speaker_labels") or {}).get("segments")) or []
+    ranges = [
+        (
+            _sec_to_ms(seg.get("start_time")),
+            _sec_to_ms(seg.get("end_time")),
+            _speaker(seg.get("speaker_label")),
+        )
+        for seg in segments
+    ]
+
+    def speaker_at(start_ms: Optional[int]) -> Optional[str]:
+        if start_ms is None:
+            return None
+        for lo, hi, who in ranges:
+            if lo is not None and hi is not None and lo <= start_ms <= hi:
+                return who
+        return None
+
+    words: List[Dict[str, Any]] = []
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        alts = item.get("alternatives") or [{}]
+        content = (alts[0] or {}).get("content", "")
+        if not content:
+            continue
+        start = _sec_to_ms(item.get("start_time"))
+        spk = _speaker(item.get("speaker_label")) or speaker_at(start)
+        words.append({
+            "text": content,
+            "speaker": spk,
+            "start": item.get("start_time"),
+            "end": item.get("end_time"),
+            "type": "punctuation" if item.get("type") == "punctuation" else "word",
+        })
+
+    # Punctuation items carry no speaker; let them attach to the running turn.
+    for i, w in enumerate(words):
+        if w["type"] == "punctuation" and i:
+            w["speaker"] = words[i - 1]["speaker"]
+
+    return _group_words(words, text_key="text", to_ms=_sec_to_ms, join_punct=True)
+
+
+_GOOGLE_TIME = "s"
+
+
+def _google_time(value: Any) -> Optional[int]:
+    """Google writes durations as ``"1.500s"``."""
+    if value is None:
+        return None
+    if isinstance(value, dict):  # protobuf {seconds, nanos}
+        secs = float(value.get("seconds", 0))
+        nanos = float(value.get("nanos", 0))
+        return round(secs * 1000 + nanos / 1e6)
+    text = str(value).strip()
+    if text.endswith(_GOOGLE_TIME):
+        text = text[:-1]
+    return _sec_to_ms(text)
+
+
+def _from_google(data: Dict[str, Any]) -> List[Turn]:
+    """Google Cloud Speech-to-Text.
+
+    Diarization results are cumulative: the final result repeats every word
+    with its ``speakerTag``, so taking the last result with words avoids
+    emitting the transcript several times over.
+    """
+    results = data.get("results") or []
+    best_words: List[Dict[str, Any]] = []
+    fallback: List[Turn] = []
+
+    for res in results:
+        alts = (res or {}).get("alternatives") or [{}]
+        alt = alts[0] or {}
+        words = alt.get("words") or []
+        if words:
+            best_words = words  # cumulative; the last one wins
+        elif alt.get("transcript"):
+            fallback.append(
+                Turn(text=str(alt["transcript"]).strip(), index=len(fallback))
+            )
+
+    if not best_words:
+        return fallback
+
+    normalised = [
+        {
+            "text": w.get("word", ""),
+            "speaker": _speaker(w.get("speakerTag") or w.get("speaker_tag")),
+            "start": w.get("startTime") or w.get("start_time"),
+            "end": w.get("endTime") or w.get("end_time"),
+        }
+        for w in best_words
+        if isinstance(w, dict)
+    ]
+    return _group_words(normalised, text_key="text", to_ms=_google_time)
+
+
+def _from_azure(data: Dict[str, Any]) -> List[Turn]:
+    """Azure Speech batch transcription. Time is in 100-nanosecond ticks."""
+    out: List[Turn] = []
+    for phrase in data.get("recognizedPhrases") or []:
+        if not isinstance(phrase, dict):
+            continue
+        best = (phrase.get("nBest") or [{}])[0] or {}
+        text = str(best.get("display") or best.get("lexical") or "").strip()
+        if not text:
+            continue
+        offset = phrase.get("offsetInTicks")
+        duration = phrase.get("durationInTicks")
+        start_ms = round(float(offset) / 10_000) if offset is not None else None
+        end_ms = (
+            round((float(offset) + float(duration)) / 10_000)
+            if offset is not None and duration is not None
+            else None
+        )
+        out.append(Turn(
+            text=text,
+            speaker=_speaker(phrase.get("speaker")),
+            start_ms=start_ms,
+            end_ms=end_ms,
+            index=len(out),
+        ))
+    return out
+
+
 _DISPATCH = {
     "whisper": lambda d: _from_whisper(d),
     "assemblyai": lambda d: _from_assemblyai(d),
     "deepgram": lambda d: _from_deepgram(d),
     "rev": lambda d: _from_rev(d),
     "speechmatics": lambda d: _from_speechmatics(d),
+    "aws": lambda d: _from_aws(d),
+    "google": lambda d: _from_google(d),
+    "azure": lambda d: _from_azure(d),
     "generic_list": lambda d: _from_generic(d),
     "generic_dict": lambda d: _from_generic(
         d.get("utterances") or d.get("turns") or d.get("transcript")

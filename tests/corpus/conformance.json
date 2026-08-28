@@ -246,6 +246,63 @@
           "index": 1
         }
       ]
+    },
+    "aws_transcribe.json": {
+      "format": "json:aws",
+      "turns": [
+        {
+          "text": "Hello there.",
+          "speaker": "spk_0",
+          "start_ms": 500,
+          "end_ms": 1400,
+          "index": 0
+        },
+        {
+          "text": "How are you?",
+          "speaker": "spk_1",
+          "start_ms": 2000,
+          "end_ms": 2700,
+          "index": 1
+        }
+      ]
+    },
+    "google_stt.json": {
+      "format": "json:google",
+      "turns": [
+        {
+          "text": "Hello there",
+          "speaker": "SPEAKER_01",
+          "start_ms": 500,
+          "end_ms": 1400,
+          "index": 0
+        },
+        {
+          "text": "How are you",
+          "speaker": "SPEAKER_02",
+          "start_ms": 2000,
+          "end_ms": 2700,
+          "index": 1
+        }
+      ]
+    },
+    "azure_speech.json": {
+      "format": "json:azure",
+      "turns": [
+        {
+          "text": "Hello there.",
+          "speaker": "SPEAKER_01",
+          "start_ms": 500,
+          "end_ms": 1400,
+          "index": 0
+        },
+        {
+          "text": "How are you?",
+          "speaker": "SPEAKER_02",
+          "start_ms": 2000,
+          "end_ms": 2700,
+          "index": 1
+        }
+      ]
     }
   },
   "chunk": {
@@ -1212,6 +1269,219 @@
             "primary_speaker": "SPEAKER_00",
             "start_ms": 1020,
             "end_ms": 2900,
+            "turn_start": 0,
+            "turn_end": 1,
+            "overlap_indices": []
+          }
+        ]
+      }
+    ],
+    "aws_transcribe.json": [
+      {
+        "options": {
+          "target": 200,
+          "overlap": 0,
+          "min_tail_ratio": 0.3333333333333333
+        },
+        "chunks": [
+          {
+            "id": "5337d807e33f704c",
+            "text": "spk_0: Hello there.\nspk_1: How are you?",
+            "speakers": [
+              "spk_0",
+              "spk_1"
+            ],
+            "primary_speaker": "spk_1",
+            "start_ms": 500,
+            "end_ms": 2700,
+            "turn_start": 0,
+            "turn_end": 1,
+            "overlap_indices": []
+          }
+        ]
+      },
+      {
+        "options": {
+          "target": 500,
+          "overlap": 100,
+          "min_tail_ratio": 0.3333333333333333
+        },
+        "chunks": [
+          {
+            "id": "5337d807e33f704c",
+            "text": "spk_0: Hello there.\nspk_1: How are you?",
+            "speakers": [
+              "spk_0",
+              "spk_1"
+            ],
+            "primary_speaker": "spk_1",
+            "start_ms": 500,
+            "end_ms": 2700,
+            "turn_start": 0,
+            "turn_end": 1,
+            "overlap_indices": []
+          }
+        ]
+      },
+      {
+        "options": {
+          "target": 2000,
+          "overlap": 0,
+          "min_tail_ratio": 0.0
+        },
+        "chunks": [
+          {
+            "id": "5337d807e33f704c",
+            "text": "spk_0: Hello there.\nspk_1: How are you?",
+            "speakers": [
+              "spk_0",
+              "spk_1"
+            ],
+            "primary_speaker": "spk_1",
+            "start_ms": 500,
+            "end_ms": 2700,
+            "turn_start": 0,
+            "turn_end": 1,
+            "overlap_indices": []
+          }
+        ]
+      }
+    ],
+    "google_stt.json": [
+      {
+        "options": {
+          "target": 200,
+          "overlap": 0,
+          "min_tail_ratio": 0.3333333333333333
+        },
+        "chunks": [
+          {
+            "id": "d49350797e69d89f",
+            "text": "SPEAKER_01: Hello there\nSPEAKER_02: How are you",
+            "speakers": [
+              "SPEAKER_01",
+              "SPEAKER_02"
+            ],
+            "primary_speaker": "SPEAKER_02",
+            "start_ms": 500,
+            "end_ms": 2700,
+            "turn_start": 0,
+            "turn_end": 1,
+            "overlap_indices": []
+          }
+        ]
+      },
+      {
+        "options": {
+          "target": 500,
+          "overlap": 100,
+          "min_tail_ratio": 0.3333333333333333
+        },
+        "chunks": [
+          {
+            "id": "d49350797e69d89f",
+            "text": "SPEAKER_01: Hello there\nSPEAKER_02: How are you",
+            "speakers": [
+              "SPEAKER_01",
+              "SPEAKER_02"
+            ],
+            "primary_speaker": "SPEAKER_02",
+            "start_ms": 500,
+            "end_ms": 2700,
+            "turn_start": 0,
+            "turn_end": 1,
+            "overlap_indices": []
+          }
+        ]
+      },
+      {
+        "options": {
+          "target": 2000,
+          "overlap": 0,
+          "min_tail_ratio": 0.0
+        },
+        "chunks": [
+          {
+            "id": "d49350797e69d89f",
+            "text": "SPEAKER_01: Hello there\nSPEAKER_02: How are you",
+            "speakers": [
+              "SPEAKER_01",
+              "SPEAKER_02"
+            ],
+            "primary_speaker": "SPEAKER_02",
+            "start_ms": 500,
+            "end_ms": 2700,
+            "turn_start": 0,
+            "turn_end": 1,
+            "overlap_indices": []
+          }
+        ]
+      }
+    ],
+    "azure_speech.json": [
+      {
+        "options": {
+          "target": 200,
+          "overlap": 0,
+          "min_tail_ratio": 0.3333333333333333
+        },
+        "chunks": [
+          {
+            "id": "0c5acbed0ed9748b",
+            "text": "SPEAKER_01: Hello there.\nSPEAKER_02: How are you?",
+            "speakers": [
+              "SPEAKER_01",
+              "SPEAKER_02"
+            ],
+            "primary_speaker": "SPEAKER_02",
+            "start_ms": 500,
+            "end_ms": 2700,
+            "turn_start": 0,
+            "turn_end": 1,
+            "overlap_indices": []
+          }
+        ]
+      },
+      {
+        "options": {
+          "target": 500,
+          "overlap": 100,
+          "min_tail_ratio": 0.3333333333333333
+        },
+        "chunks": [
+          {
+            "id": "0c5acbed0ed9748b",
+            "text": "SPEAKER_01: Hello there.\nSPEAKER_02: How are you?",
+            "speakers": [
+              "SPEAKER_01",
+              "SPEAKER_02"
+            ],
+            "primary_speaker": "SPEAKER_02",
+            "start_ms": 500,
+            "end_ms": 2700,
+            "turn_start": 0,
+            "turn_end": 1,
+            "overlap_indices": []
+          }
+        ]
+      },
+      {
+        "options": {
+          "target": 2000,
+          "overlap": 0,
+          "min_tail_ratio": 0.0
+        },
+        "chunks": [
+          {
+            "id": "0c5acbed0ed9748b",
+            "text": "SPEAKER_01: Hello there.\nSPEAKER_02: How are you?",
+            "speakers": [
+              "SPEAKER_01",
+              "SPEAKER_02"
+            ],
+            "primary_speaker": "SPEAKER_02",
+            "start_ms": 500,
+            "end_ms": 2700,
             "turn_start": 0,
             "turn_end": 1,
             "overlap_indices": []

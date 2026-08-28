@@ -28,6 +28,7 @@ FIXTURES = [
     "escaped_tags.vtt", "basic.srt", "otter.txt", "bracketed.txt",
     "whisperx_diarized.json", "whisper_plain.json", "assemblyai.json",
     "deepgram.json", "deepgram_words_only.json", "rev.json",
+    "aws_transcribe.json", "google_stt.json", "azure_speech.json",
 ]
 
 CHUNK_CASES = [

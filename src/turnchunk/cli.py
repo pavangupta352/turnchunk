@@ -376,6 +376,9 @@ def cmd_formats(args) -> int:
         ("json:assemblyai", "AssemblyAI utterances or words (milliseconds)"),
         ("json:rev", "Rev.ai monologues"),
         ("json:speechmatics", "Speechmatics results"),
+        ("json:aws", "AWS Transcribe items + speaker_labels (times as strings)"),
+        ("json:google", "Google Cloud STT words with '1.500s' times and speakerTag"),
+        ("json:azure", "Azure Speech batch phrases (100-nanosecond ticks)"),
         ("json:generic", "Any list of {speaker, text, start, end} objects"),
     ]
     for name, detail in rows:

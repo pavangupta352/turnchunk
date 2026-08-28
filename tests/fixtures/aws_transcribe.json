@@ -1,0 +1,14 @@
+{"jobName":"meeting","accountId":"1234","status":"COMPLETED",
+ "results":{
+  "transcripts":[{"transcript":"Hello there. How are you?"}],
+  "speaker_labels":{"speakers":2,"segments":[
+    {"start_time":"0.5","end_time":"1.4","speaker_label":"spk_0","items":[]},
+    {"start_time":"2.0","end_time":"2.7","speaker_label":"spk_1","items":[]}]},
+  "items":[
+   {"start_time":"0.5","end_time":"0.9","alternatives":[{"confidence":"0.99","content":"Hello"}],"type":"pronunciation"},
+   {"start_time":"0.9","end_time":"1.4","alternatives":[{"confidence":"0.98","content":"there"}],"type":"pronunciation"},
+   {"alternatives":[{"confidence":"0.0","content":"."}],"type":"punctuation"},
+   {"start_time":"2.0","end_time":"2.3","alternatives":[{"confidence":"0.99","content":"How"}],"type":"pronunciation"},
+   {"start_time":"2.3","end_time":"2.5","alternatives":[{"confidence":"0.99","content":"are"}],"type":"pronunciation"},
+   {"start_time":"2.5","end_time":"2.7","alternatives":[{"confidence":"0.99","content":"you"}],"type":"pronunciation"},
+   {"alternatives":[{"confidence":"0.0","content":"?"}],"type":"punctuation"}]}}

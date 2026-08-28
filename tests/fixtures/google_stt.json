@@ -1,0 +1,8 @@
+{"results":[
+ {"alternatives":[{"transcript":"hello there how are you","confidence":0.95}]},
+ {"alternatives":[{"transcript":"hello there how are you","confidence":0.95,"words":[
+   {"startTime":"0.500s","endTime":"0.900s","word":"Hello","speakerTag":1},
+   {"startTime":"0.900s","endTime":"1.400s","word":"there","speakerTag":1},
+   {"startTime":"2.000s","endTime":"2.300s","word":"How","speakerTag":2},
+   {"startTime":"2.300s","endTime":"2.500s","word":"are","speakerTag":2},
+   {"startTime":"2.500s","endTime":"2.700s","word":"you","speakerTag":2}]}]}]}

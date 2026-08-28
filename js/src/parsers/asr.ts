@@ -16,6 +16,7 @@ type Json = any;
 
 const VENDORS = [
   "whisper", "assemblyai", "deepgram", "rev", "speechmatics",
+  "aws", "google", "azure",
   "generic_list", "generic_dict",
 ] as const;
 export type Vendor = (typeof VENDORS)[number];
@@ -31,12 +32,20 @@ export function identify(data: Json): Vendor | null {
   if (Array.isArray(data)) return isTurnList(data) ? "generic_list" : null;
   if (typeof data !== "object" || data === null) return null;
   if ("monologues" in data) return "rev";
+  if ("recognizedPhrases" in data || "combinedRecognizedPhrases" in data) return "azure";
   const results = data["results"];
-  if (results && !Array.isArray(results) && typeof results === "object" && "channels" in results) {
-    return "deepgram";
+  if (results && !Array.isArray(results) && typeof results === "object") {
+    if ("channels" in results) return "deepgram";
+    if ("speaker_labels" in results || "items" in results) return "aws";
   }
-  if (Array.isArray(results) && results.length && results[0] && "alternatives" in results[0]) {
-    return "speechmatics";
+  if (Array.isArray(results) && results.length && results[0]) {
+    // Google and Speechmatics both use results[].alternatives; the
+    // discriminator is what is inside an alternative.
+    const alt = (results[0]["alternatives"] ?? [])[0];
+    if (alt && typeof alt === "object") {
+      if ("words" in alt || "transcript" in alt) return "google";
+      if ("content" in alt || "start_time" in results[0]) return "speechmatics";
+    }
   }
   if (Array.isArray(data["utterances"])) {
     return "words" in data || "id" in data ? "assemblyai" : "generic_dict";
@@ -257,12 +266,122 @@ function fromGeneric(items: Json[]): Turn[] {
   return out;
 }
 
+/**
+ * AWS Transcribe. Times arrive as *strings*, and with diarization the speaker
+ * lives on results.speaker_labels.segments rather than on the items.
+ */
+function fromAws(data: Json): Turn[] {
+  const results = data["results"] ?? {};
+  const items = results["items"] ?? [];
+  const segments = (results["speaker_labels"] ?? {})["segments"] ?? [];
+
+  const ranges = segments.map((seg: Json) => [
+    secToMs(seg["start_time"]), secToMs(seg["end_time"]), speakerOf(seg["speaker_label"]),
+  ] as [number | null, number | null, string | null]);
+
+  const speakerAt = (startMs: number | null): string | null => {
+    if (startMs === null) return null;
+    for (const [lo, hi, who] of ranges) {
+      if (lo !== null && hi !== null && lo <= startMs && startMs <= hi) return who;
+    }
+    return null;
+  };
+
+  const words: Json[] = [];
+  for (const item of items) {
+    if (typeof item !== "object" || item === null) continue;
+    const content = ((item["alternatives"] ?? [{}])[0] ?? {})["content"] ?? "";
+    if (!content) continue;
+    const start = secToMs(item["start_time"]);
+    words.push({
+      text: content,
+      speaker: speakerOf(item["speaker_label"]) ?? speakerAt(start),
+      start: item["start_time"],
+      end: item["end_time"],
+      type: item["type"] === "punctuation" ? "punctuation" : "word",
+    });
+  }
+  // Punctuation carries no speaker; attach it to the running turn.
+  words.forEach((w, i) => {
+    if (w["type"] === "punctuation" && i) w["speaker"] = words[i - 1]!["speaker"];
+  });
+
+  return groupWords(words, { textKey: "text", toMs: secToMs, joinPunct: true });
+}
+
+/** Google writes durations as "1.500s", or as {seconds, nanos} protobuf. */
+function googleTime(value: Json): number | null {
+  if (value === null || value === undefined) return null;
+  if (typeof value === "object") {
+    const secs = Number(value["seconds"] ?? 0);
+    const nanos = Number(value["nanos"] ?? 0);
+    return Math.round(secs * 1000 + nanos / 1e6);
+  }
+  let text = String(value).trim();
+  if (text.endsWith("s")) text = text.slice(0, -1);
+  return secToMs(text);
+}
+
+/**
+ * Google Cloud STT. Diarization results are cumulative -- the final result
+ * repeats every word with its speakerTag -- so the last word list wins.
+ */
+function fromGoogle(data: Json): Turn[] {
+  let bestWords: Json[] = [];
+  const fallback: Turn[] = [];
+
+  for (const res of data["results"] ?? []) {
+    const alt = ((res ?? {})["alternatives"] ?? [{}])[0] ?? {};
+    const words = alt["words"] ?? [];
+    if (words.length) bestWords = words;
+    else if (alt["transcript"]) {
+      fallback.push(makeTurn({ text: String(alt["transcript"]).trim(), index: fallback.length }));
+    }
+  }
+  if (!bestWords.length) return fallback;
+
+  const normalised = bestWords
+    .filter((w) => typeof w === "object" && w !== null)
+    .map((w) => ({
+      text: w["word"] ?? "",
+      speaker: speakerOf(w["speakerTag"] ?? w["speaker_tag"]),
+      start: w["startTime"] ?? w["start_time"],
+      end: w["endTime"] ?? w["end_time"],
+    }));
+  return groupWords(normalised, { textKey: "text", toMs: googleTime });
+}
+
+/** Azure Speech batch transcription. Time is in 100-nanosecond ticks. */
+function fromAzure(data: Json): Turn[] {
+  const out: Turn[] = [];
+  for (const phrase of data["recognizedPhrases"] ?? []) {
+    if (typeof phrase !== "object" || phrase === null) continue;
+    const best = (phrase["nBest"] ?? [{}])[0] ?? {};
+    const text = String(best["display"] ?? best["lexical"] ?? "").trim();
+    if (!text) continue;
+    const offset = phrase["offsetInTicks"];
+    const duration = phrase["durationInTicks"];
+    const startMs = offset !== undefined && offset !== null ? Math.round(Number(offset) / 10_000) : null;
+    const endMs =
+      offset !== undefined && offset !== null && duration !== undefined && duration !== null
+        ? Math.round((Number(offset) + Number(duration)) / 10_000)
+        : null;
+    out.push(makeTurn({
+      text, speaker: speakerOf(phrase["speaker"]), startMs, endMs, index: out.length,
+    }));
+  }
+  return out;
+}
+
 const DISPATCH: Record<Vendor, (d: Json) => Turn[]> = {
   whisper: fromWhisper,
   assemblyai: fromAssemblyAI,
   deepgram: fromDeepgram,
   rev: fromRev,
   speechmatics: fromSpeechmatics,
+  aws: fromAws,
+  google: fromGoogle,
+  azure: fromAzure,
   generic_list: (d) => fromGeneric(d),
   generic_dict: (d) =>
     fromGeneric(d["utterances"] ?? d["turns"] ?? d["transcript"] ?? d["items"] ?? d["entries"] ?? []),

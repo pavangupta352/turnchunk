@@ -1,0 +1,7 @@
+{"source":"meeting.wav","durationInTicks":41200000,"duration":"PT4.12S",
+ "combinedRecognizedPhrases":[{"channel":0,"display":"Hello there. How are you?"}],
+ "recognizedPhrases":[
+  {"recognitionStatus":"Success","channel":0,"speaker":1,"offsetInTicks":5000000.0,"durationInTicks":9000000.0,
+   "nBest":[{"confidence":0.94,"lexical":"hello there","display":"Hello there."}]},
+  {"recognitionStatus":"Success","channel":0,"speaker":2,"offsetInTicks":20000000.0,"durationInTicks":7000000.0,
+   "nBest":[{"confidence":0.92,"lexical":"how are you","display":"How are you?"}]}]}
