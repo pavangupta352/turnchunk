@@ -1,0 +1,5 @@
+{"id":"abc-123","status":"completed","text":"Can everyone hear me okay? Yep, coming through fine.",
+ "utterances":[
+  {"confidence":0.97,"start":2100,"end":5400,"text":"Can everyone hear me okay?","speaker":"A","words":[]},
+  {"confidence":0.95,"start":5400,"end":7900,"text":"Yep, coming through fine.","speaker":"B","words":[]}],
+ "words":[{"text":"Can","start":2100,"end":2300,"confidence":0.99,"speaker":"A"}]}

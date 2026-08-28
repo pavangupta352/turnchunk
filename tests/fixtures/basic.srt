@@ -1,0 +1,7 @@
+1
+00:00:01,000 --> 00:00:03,500
+Alice: The contract renews automatically.
+
+2
+00:00:03,500 --> 00:00:06,000
+Bob: <i>Only</i> if neither party gives notice.

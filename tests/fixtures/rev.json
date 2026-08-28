@@ -1,0 +1,4 @@
+{"monologues":[
+ {"speaker":0,"elements":[{"type":"text","value":"The","ts":1.02,"end_ts":1.20},{"type":"punct","value":" "},
+   {"type":"text","value":"contract","ts":1.20,"end_ts":1.71},{"type":"punct","value":"."}]},
+ {"speaker":1,"elements":[{"type":"text","value":"Understood","ts":2.30,"end_ts":2.90},{"type":"punct","value":"."}]}]}

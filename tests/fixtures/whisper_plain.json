@@ -1,0 +1,5 @@
+{"text":"Right, let's start with the renewal. Twelve percent is a lot.",
+ "segments":[
+  {"id":0,"seek":0,"start":0.0,"end":3.5,"text":" Right, let's start with the renewal.","tokens":[50364,10161],"temperature":0.0,"avg_logprob":-0.31,"compression_ratio":1.2,"no_speech_prob":0.01},
+  {"id":1,"seek":0,"start":3.5,"end":6.0,"text":" Twelve percent is a lot.","tokens":[50464,21082],"temperature":0.0,"avg_logprob":-0.28,"compression_ratio":1.1,"no_speech_prob":0.01}],
+ "language":"en"}

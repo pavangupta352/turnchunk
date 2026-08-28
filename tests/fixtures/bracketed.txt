@@ -1,0 +1,3 @@
+[00:00:01] Alice: The contract renews automatically.
+[00:00:04] Bob: Only if neither party gives notice.
+[00:00:08] Bob: Which we never do, historically.

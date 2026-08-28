@@ -1,0 +1,298 @@
+<h1 align="center">turnchunk</h1>
+
+<p align="center">
+  <strong>Chunking that understands who is speaking.</strong><br>
+  Parse any transcript, chunk it without ever splitting a speaker turn, and keep
+  the speaker and timestamp on every chunk.
+</p>
+
+<p align="center">
+  <a href="https://pypi.org/project/turnchunk/"><img alt="PyPI" src="https://img.shields.io/pypi/v/turnchunk?color=2563eb"></a>
+  <a href="https://pypi.org/project/turnchunk/"><img alt="Python" src="https://img.shields.io/pypi/pyversions/turnchunk"></a>
+  <img alt="Dependencies" src="https://img.shields.io/badge/dependencies-0-2563eb">
+  <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-MIT-2563eb"></a>
+</p>
+
+---
+
+**90 people on GitHub have written a function called `def chunk_by_speaker`.
+2,080 more have hand-rolled it inline. Nobody packaged it.**
+
+chonkie ships 11 chunkers. LangChain ships 11 text splitters. LlamaIndex ships 7
+node parsers. Not one of the 29 understands a conversation. So everyone building
+over meetings, interviews, calls, podcasts or depositions writes the same 200
+lines, slightly differently, and gets the same details wrong.
+
+Every number above is a live query. Run [`scripts/verify-prior-art.sh`](scripts/verify-prior-art.sh)
+and check.
+
+## What goes wrong without it
+
+```console
+$ turnchunk viz meeting.vtt --compare --target 240
+```
+
+```
+  RecursiveCharacterTextSplitter  (size=240)
+  ──────────────────────────────────────────────────────────────────────────────
+  ┌─ chunk 1 · Priya Raman ───────────────────────────────────────────────────
+  │ Priya Raman: Okay, we're recording. The main thing today is the Aventra
+  │ renewal, because their current term ends on the thirty-first and we still
+  │ don't have a signature. Marcus, you've been closest to it
+  └─────────────────────────────────────────────────────────────────────────────
+  ┌─ chunk 2 · ? ─────────────────────────────────────────────────────────────  who said this?
+  │ Where did we land after Thursday's call?
+  └─────────────────────────────────────────────────────────────────────────────
+  ┌─ chunk 5 · Dana Okafor ───────────────────────────────────────────────────
+  │ Dana Okafor: Three outages is right, but two of those were the upstream
+  │ provider, not us. We have the incident reports
+  └─────────────────────────────────────────────────────────────────────────────
+  ┌─ chunk 6 · ? ─────────────────────────────────────────────────────────────  who said this?
+  │ If we're going to give ground on price I'd rather we do it because we want
+  │ to keep the logo, not because we've accepted a version of events that
+  │ isn't accurate.
+  └─────────────────────────────────────────────────────────────────────────────
+
+  10 chunks · 3 cannot be attributed to a speaker · 0 carry a timestamp
+
+  turnchunk  (target=240)
+  ──────────────────────────────────────────────────────────────────────────────
+  ┌─ chunk 5 · Dana Okafor · 00:41–01:02 ─────────────────────────────────────
+  │ Dana Okafor: If we're going to give ground on price I'd rather we do it
+  │ because we want to keep the logo, not because we've accepted a version of
+  │ events that isn't accurate.
+  └─────────────────────────────────────────────────────────────────────────────
+
+  8 chunks · 0 cannot be attributed to a speaker · 8 carry a timestamp
+```
+
+Chunk 6 is Dana arguing against a discount. Retrieved on its own it says so
+nowhere, so a RAG answer to *"who wanted to hold the price?"* has nothing to go
+on but a guess — and attributing a commitment to the wrong person is worse than
+not finding it at all.
+
+Reproduce it yourself: `turnchunk viz examples/renewal-call.vtt --compare --target 240`
+
+## Install
+
+```bash
+pip install turnchunk
+```
+
+Zero dependencies. Installs in under a second, runs on Python 3.9+, in a Lambda,
+on a Raspberry Pi, inside an air-gapped network.
+
+## 30 seconds
+
+```python
+from turnchunk import parse, chunk
+
+turns  = parse("meeting.vtt")          # format auto-detected from content
+chunks = chunk(turns, target=2000, overlap=200)
+
+for c in chunks:
+    print(c.primary_speaker, c.start_ms, c.text[:80])
+```
+
+Every chunk carries what you need to cite it:
+
+```python
+c.id                # stable, content-addressed - usable as a vector-store key
+c.text              # "Dana Okafor: If we're going to give ground on price..."
+c.speakers          # ["Dana Okafor"]
+c.primary_speaker   # "Dana Okafor"  (overlap excluded)
+c.start_ms          # 41600      -> jump a player to the moment it was said
+c.end_ms            # 62300
+c.turn_start        # 5          -> index back into the transcript
+c.overlap_indices   # [0]        -> which turns were carried from the last chunk
+```
+
+## Reads anything
+
+Detected from file **content**, never the extension — exports are routinely
+saved with the wrong suffix.
+
+| Format | Handles |
+|---|---|
+| **WebVTT** | Teams `<v Speaker>` spans, Zoom inline names, **YouTube rolling captions**, per-word `<00:00:01.234>` timestamps, `NOTE`/`STYLE` blocks, cue settings |
+| **SubRip** | numbered blocks, HTML markup, inline speakers |
+| **Plain text** | `[00:12] Alice:` · `Alice:` · `**Alice:**` · `Alice (0:12):` · Otter's name-then-time layout · wrapped paragraphs |
+| **Whisper** | openai-whisper, faster-whisper, WhisperX, OpenAI `verbose_json`, diarized or not |
+| **Deepgram** | `utterances`, `paragraphs`, or word-level with speaker ids |
+| **AssemblyAI** | `utterances` or `words` — **milliseconds**, not seconds |
+| **Rev.ai** | `monologues` with punctuation elements |
+| **Speechmatics** | `results` with per-word speakers |
+| **Anything else** | any list of `{speaker, text, start, end}` objects |
+
+Three of these are quietly hostile:
+
+- **YouTube auto-captions scroll.** Each cue repeats the previous cue's tail.
+  Concatenate them naively and most of your transcript appears two or three
+  times, silently doubling your index. turnchunk detects the overlap and reports
+  how many cues it removed.
+- **AssemblyAI uses milliseconds while everyone else uses seconds.** Read it
+  wrong and the text is perfect while every citation points at the wrong moment,
+  forever.
+- **A cue is not a turn.** Subtitle cues break every few seconds for *display*.
+  Chunking on cues instead of turns makes speaker-aware chunking pointless, so
+  `parse()` merges consecutive same-speaker cues into real turns.
+
+## The four rules
+
+1. **A chunk boundary only ever falls on a speaker turn boundary.** No chunk
+   contains the tail of one person's answer glued to the start of another's.
+2. **A turn longer than the target splits at sentence boundaries**, and every
+   piece keeps its speaker. Splitting a monologue is unavoidable; losing the
+   attribution is not.
+3. **Overlap is whole turns**, and carried-over turns are marked in
+   `overlap_indices` so aggregates don't count a speaker twice.
+4. **Short tails merge backwards.** A 40-character trailing chunk is a stub;
+   stubs match everything weakly and crowd real content out of the top-k.
+
+```python
+chunk(turns,
+      target=2000,           # measured on the rendered text, label included
+      overlap=200,           # rounded up to whole turns
+      min_tail_ratio=1/3,    # tails below this fraction merge backwards
+      size_fn=len)           # pass a tokeniser to budget in tokens instead
+```
+
+Budget in tokens without bundling a 100MB tokenizer:
+
+```python
+import tiktoken
+enc = tiktoken.get_encoding("cl100k_base")
+chunk(turns, target=512, size_fn=lambda s: len(enc.encode(s)))
+```
+
+## Speakers get resolved
+
+One transcript refers to the same person four ways. Left alone that's four
+"different" people, and filtering by participant silently returns a third of
+their turns.
+
+```python
+from turnchunk.speakers import resolve_speakers
+
+turns, mapping = resolve_speakers(turns)
+# {"john": "John Smith", "JOHN SMITH": "John Smith", "J. Smith": "John Smith"}
+```
+
+```console
+$ turnchunk speakers interview.vtt
+
+  John Smith   ←  john, JOHN SMITH, J. Smith, John (Host)
+  Dana Okafor  ←  dana okafor
+
+  2 distinct speakers from 6 labels
+```
+
+**It refuses to guess.** `J. Smith` alongside *both* `John Smith` and
+`Jane Smith` stays separate — merging there would misattribute what someone
+said, which is the one failure this library must never produce. `SPEAKER_00`
+and `SPEAKER_01` are never merged either. Override explicitly when you know:
+
+```python
+resolve_speakers(turns, rename={"SPEAKER_00": "Alice Chen"})
+```
+
+## Drop into your pipeline
+
+```python
+# LangChain
+from turnchunk.integrations.langchain import TurnChunkSplitter
+docs = TurnChunkSplitter(chunk_size=2000).split_transcript("meeting.vtt")
+
+# LlamaIndex
+from turnchunk.integrations.llamaindex import TurnChunkNodeParser
+nodes = TurnChunkNodeParser(chunk_size=2000).parse_transcript("meeting.vtt")
+
+# chonkie-shaped
+from turnchunk.integrations.chonkie import ConversationChunker
+chunks = ConversationChunker(chunk_size=2000)("meeting.vtt")
+```
+
+Speaker, time span and turn range land in the document metadata, so you can
+filter by participant and jump a player to the second it was said.
+
+## Render it for a prompt
+
+```python
+from turnchunk.render import to_context_all
+prompt_block = to_context_all(chunks)      # overlap dropped automatically
+```
+
+```
+[meeting.vtt 00:41–01:02]
+(00:41) Dana Okafor: Three outages is right, but two of those were upstream.
+(00:52) Priya Raman: That's fair. Did they put it in writing?
+```
+
+## CLI
+
+```console
+turnchunk viz meeting.vtt --compare     # see it against a naive splitter
+turnchunk chunk meeting.vtt --json      # chunks with full metadata
+turnchunk chunk meeting.vtt --context   # rendered for a prompt
+turnchunk stats meeting.vtt             # speakers, talk time, duration
+turnchunk speakers meeting.vtt          # resolved identity mapping
+turnchunk detect transcripts/*          # what format is this, really?
+turnchunk report transcripts/*.vtt --fail-on-issues   # CI gate
+```
+
+## What's guaranteed
+
+The central claim is not asserted, it's tested. `test_a_turn_is_never_split`
+generates 40 transcripts, runs each through 27 configurations, and checks every
+turn that fits the target:
+
+```
+40 generated transcripts × 27 configs = 1,080 chunk runs
+21,924 individual "this turn was not split" assertions
+```
+
+Also covered: no content is lost; overlap is always a whole-turn suffix; short
+tails merge; oversized turns keep their speaker on every piece; unknown
+timestamps stay `None` and never become `0`; chunk ids are deterministic across
+runs and machines; ambiguous speaker names never merge.
+
+```bash
+pip install -e ".[dev]" && pytest      # 92 tests
+```
+
+## Scope
+
+turnchunk does one thing: **transcript in, well-formed chunks out.**
+
+It does not transcribe, embed, store or retrieve, and it never calls a model.
+That's why it has no dependencies and why it composes with whatever you already
+use. If you want the surrounding pipeline, bring your own — this is the piece in
+the middle that nobody had written.
+
+## Prior art, honestly
+
+There is no packaged speaker-aware chunker on PyPI, npm, or GitHub — that's what
+`scripts/verify-prior-art.sh` checks. The closest things:
+
+| Project | What it is | Speaker-aware? |
+|---|---|---|
+| [chonkie](https://github.com/feyninc/chonkie) | The chunking library. 11 chunkers, excellent. | No |
+| [LangChain text-splitters](https://github.com/langchain-ai/langchain) | 11 splitters by language and markup | No |
+| [LlamaIndex node parsers](https://github.com/run-llama/llama_index) | 7 parsers including semantic | No |
+| [semchunk](https://github.com/isaacus-dev/semchunk) | Fast semantic splitting | No |
+
+If you only need prose chunking, use chonkie — it's better at that than this
+will ever be. turnchunk exists for the case where *who said it* is part of the
+answer.
+
+## Contributing
+
+The most valuable contribution is **a transcript format that breaks the parser.**
+Real exports beat synthetic fixtures every time. Drop a file (redacted as needed)
+in an issue, or add it to `tests/fixtures/` with a test.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## License
+
+MIT

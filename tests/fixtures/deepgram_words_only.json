@@ -1,0 +1,5 @@
+{"results":{"channels":[{"alternatives":[{"transcript":"hello there how are you",
+   "words":[{"word":"hello","start":0.5,"end":0.9,"speaker":0,"punctuated_word":"Hello"},
+            {"word":"there","start":0.9,"end":1.4,"speaker":0,"punctuated_word":"there."},
+            {"word":"how","start":2.0,"end":2.2,"speaker":1,"punctuated_word":"How"},
+            {"word":"you","start":2.4,"end":2.7,"speaker":1,"punctuated_word":"you?"}]}]}]}}

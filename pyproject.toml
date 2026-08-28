@@ -1,0 +1,69 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "turnchunk"
+version = "0.1.0"
+description = "Chunking that understands who is speaking. Parse any transcript, chunk it without ever splitting a speaker turn."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+keywords = [
+    "chunking", "transcript", "rag", "speaker", "diarization", "vtt", "srt",
+    "webvtt", "subtitles", "whisper", "meeting", "conversation", "nlp",
+    "text-splitter", "llm", "retrieval",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Text Processing :: Linguistic",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Typing :: Typed",
+]
+# No runtime dependencies, on purpose. This installs in under a second, runs on
+# any Python 3.9+, in a Lambda, on a Pi, and inside an air-gapped network.
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=7", "pytest-cov"]
+
+[project.scripts]
+turnchunk = "turnchunk.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/turnchunk"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+target-version = "py39"
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+# pyupgrade's annotation rules (UP006/UP035/UP045) are deliberately excluded.
+# They would rewrite `Optional[int]` to `int | None` and `List[x]` to `list[x]`,
+# which is safe in annotations but breaks `typing.get_type_hints()` on the
+# dataclasses under Python 3.9 -- a version this library supports.
+select = ["E", "F", "W", "I", "B", "C4", "SIM", "RUF"]
+ignore = [
+    "E501",    # line length is handled by formatting, not the linter
+    "SIM108",  # ternaries are not always clearer
+    "B008",    # function calls in defaults are intentional here
+    "RUF001",  # en-dashes and box-drawing characters are deliberate in output
+    "RUF002",
+    "RUF003",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["SIM115"]  # reading a fixture inline in an assert is fine

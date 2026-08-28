@@ -1,0 +1,10 @@
+{"metadata":{"duration":12.6},
+ "results":{"channels":[{"alternatives":[{"transcript":"hello there how are you","confidence":0.98,
+   "words":[{"word":"hello","start":0.5,"end":0.9,"speaker":0,"punctuated_word":"Hello"},
+            {"word":"there","start":0.9,"end":1.4,"speaker":0,"punctuated_word":"there."},
+            {"word":"how","start":2.0,"end":2.2,"speaker":1,"punctuated_word":"How"},
+            {"word":"are","start":2.2,"end":2.4,"speaker":1,"punctuated_word":"are"},
+            {"word":"you","start":2.4,"end":2.7,"speaker":1,"punctuated_word":"you?"}]}]}],
+  "utterances":[
+   {"start":0.5,"end":1.4,"confidence":0.98,"channel":0,"transcript":"Hello there.","speaker":0,"id":"u1"},
+   {"start":2.0,"end":2.7,"confidence":0.97,"channel":0,"transcript":"How are you?","speaker":1,"id":"u2"}]}}
