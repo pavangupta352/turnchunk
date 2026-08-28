@@ -1,0 +1,73 @@
+name: Release
+
+# Publishes to PyPI on a version tag, using Trusted Publishing (OIDC).
+# There is no API token stored anywhere - PyPI verifies the workflow identity.
+#
+# One-time setup at https://pypi.org/manage/account/publishing/
+#   PyPI project name : turnchunk
+#   Owner             : pavangupta352
+#   Repository        : turnchunk
+#   Workflow          : release.yml
+# (Add it as a "pending publisher" before the first release, since the project
+#  does not exist on PyPI yet.)
+#
+# Then:  git tag v0.1.0 && git push origin v0.1.0
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  test:
+    uses: ./.github/workflows/ci.yml
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install build
+      - run: python -m build
+      - name: Check the tag matches the packaged version
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          PKG=$(ls dist/*.whl | sed -E 's/.*turnchunk-([0-9.]+)-py3.*/\1/')
+          echo "tag=$TAG package=$PKG"
+          [ "$TAG" = "$PKG" ] || { echo "::error::tag $TAG != version $PKG"; exit 1; }
+        if: startsWith(github.ref, 'refs/tags/v')
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write        # required for Trusted Publishing
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
+
+  github-release:
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - run: gh release create "$GITHUB_REF_NAME" dist/* --generate-notes
+        env:
+          GH_TOKEN: ${{ github.token }}
