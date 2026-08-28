@@ -40,6 +40,11 @@ turnchunk = "turnchunk.cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/turnchunk"]
+# py.typed tells type checkers the inline annotations are authoritative.
+artifacts = ["src/turnchunk/py.typed"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/", "tests/", "examples/", "scripts/", "README.md", "LICENSE", "CHANGELOG.md"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
