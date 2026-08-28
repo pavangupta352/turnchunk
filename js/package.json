@@ -1,0 +1,61 @@
+{
+  "name": "turnchunk",
+  "version": "0.1.0",
+  "description": "Chunking that understands who is speaking. Parse any transcript, chunk it without ever splitting a speaker turn. Zero dependencies.",
+  "keywords": [
+    "chunking",
+    "transcript",
+    "rag",
+    "speaker",
+    "diarization",
+    "vtt",
+    "srt",
+    "webvtt",
+    "subtitles",
+    "whisper",
+    "text-splitter",
+    "llm",
+    "retrieval",
+    "langchain"
+  ],
+  "license": "MIT",
+  "author": "Pavan Gupta",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pavangupta352/turnchunk.git",
+    "directory": "js"
+  },
+  "homepage": "https://github.com/pavangupta352/turnchunk#readme",
+  "bugs": "https://github.com/pavangupta352/turnchunk/issues",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts --clean --target es2022",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^26.4.0",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}

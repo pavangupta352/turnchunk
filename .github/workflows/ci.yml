@@ -46,6 +46,49 @@ jobs:
           print('confirmed: 0 runtime dependencies')
           "
 
+  js:
+    name: typescript (node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ["18", "20", "22"]
+    defaults:
+      run:
+        working-directory: js
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - run: npm install
+      - run: npx tsc --noEmit
+      - run: npm run build
+      # The conformance suite asserts the port is byte-identical to the Python
+      # implementation against tests/corpus/conformance.json.
+      - run: npm test
+
+  corpus-is-current:
+    name: corpus matches both implementations
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[dev]"
+      # Regenerating must be a no-op. A diff here means someone changed
+      # behaviour without regenerating the corpus, so the two languages would
+      # silently disagree.
+      - run: python scripts/build_corpus.py
+      - run: |
+          if ! git diff --quiet tests/corpus/conformance.json; then
+            echo "::error::conformance.json is stale - run python scripts/build_corpus.py"
+            git diff --stat tests/corpus/conformance.json
+            exit 1
+          fi
+          echo "corpus is current"
+
   lint:
     runs-on: ubuntu-latest
     steps:
