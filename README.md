@@ -7,9 +7,10 @@
 </p>
 
 <p align="center">
-  <a href="https://pypi.org/project/turnchunk/"><img alt="PyPI" src="https://img.shields.io/pypi/v/turnchunk?color=2563eb&label=pypi"></a>
-  <a href="https://www.npmjs.com/package/turnchunk"><img alt="npm" src="https://img.shields.io/npm/v/turnchunk?color=2563eb&label=npm"></a>
-  <a href="https://pypi.org/project/turnchunk/"><img alt="Python" src="https://img.shields.io/pypi/pyversions/turnchunk"></a>
+  <a href="https://pypi.org/project/turnchunk/"><img alt="PyPI" src="https://img.shields.io/pypi/v/turnchunk?label=pypi&color=2563eb&logo=pypi&logoColor=white"></a>
+  <a href="https://www.npmjs.com/package/turnchunk"><img alt="npm" src="https://img.shields.io/npm/v/turnchunk?label=npm&color=2563eb&logo=npm&logoColor=white"></a>
+  <a href="https://github.com/pavangupta352/turnchunk/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/pavangupta352/turnchunk/ci.yml?branch=main&label=tests&color=2563eb"></a>
+  <a href="https://pypi.org/project/turnchunk/"><img alt="Python versions" src="https://img.shields.io/pypi/pyversions/turnchunk?label=python&color=2563eb"></a>
   <img alt="Dependencies" src="https://img.shields.io/badge/dependencies-0-2563eb">
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-MIT-2563eb"></a>
 </p>
@@ -193,6 +194,8 @@ said, which is the one failure this library must never produce. `SPEAKER_00`
 and `SPEAKER_01` are never merged either. Override explicitly when you know:
 
 ```python
+from turnchunk.speakers import resolve_speakers
+
 resolve_speakers(turns, rename={"SPEAKER_00": "Alice Chen"})
 ```
 
