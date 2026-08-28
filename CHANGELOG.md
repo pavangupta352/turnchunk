@@ -23,3 +23,15 @@ First release.
 - `to_context()` prompt rendering.
 - CLI: `viz`, `chunk`, `stats`, `speakers`, `report`, `detect`, `formats`.
 - Adapters for LangChain, LlamaIndex and chonkie.
+- A TypeScript port published to npm, verified byte-identical to the Python
+  package against a shared conformance corpus — including chunk ids. Runs on
+  Node 18+, browsers, Deno, Bun and edge runtimes with zero dependencies.
+- `scripts/verify-prior-art.sh`, which reproduces every prior-art claim in the
+  README as live queries.
+
+### Notes
+- Validated against real YouTube caption exports rather than only hand-written
+  fixtures, which surfaced three bugs: HTML-escaped formatting tags leaking into
+  chunk text, and two quadratic blowups (one in sentence segmentation, one in
+  cue merging). A 1.7M-character transcript now parses in 450ms and chunks in
+  16ms.

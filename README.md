@@ -270,7 +270,9 @@ Also covered: no content is lost; overlap is always a whole-turn suffix; short
 tails merge; oversized turns keep their speaker on every piece; unknown
 timestamps stay `None` and never become `0`; chunk ids are deterministic across
 runs and machines; ambiguous speaker names never merge; and the LangChain and
-LlamaIndex adapters are exercised against the real frameworks in CI.
+LlamaIndex adapters are exercised against the real frameworks in CI — which
+runs everything on Python 3.9–3.13 across Linux, macOS and Windows, and the
+TypeScript port on Node 18, 20 and 22.
 
 Parsers are regression-tested against structures taken from genuine exports,
 including the case where YouTube writes `&lt;i&gt;` for italics — which used to
@@ -278,7 +280,8 @@ leak a literal `<i>` into the chunk text, and was only ever going to be found by
 running a real file through it.
 
 ```bash
-pip install -e ".[dev]" && pytest      # 96 tests
+pip install -e ".[dev]" && pytest      # 131 Python tests
+cd js && npm ci && npm test            # 75 TypeScript conformance tests
 ```
 
 ## Scope
