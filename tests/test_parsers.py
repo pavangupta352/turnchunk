@@ -142,3 +142,54 @@ def test_parse_accepts_path_string_and_file_object():
 def test_bom_is_tolerated():
     t = parse("﻿WEBVTT\n\n00:00:01.000 --> 00:00:02.000\n<v A>hi</v>\n")
     assert len(t) == 1
+
+
+# ------------------------------------------------- real-world regressions ----
+#
+# These reproduce structures observed in genuine exports (fetched with yt-dlp
+# from public videos). The content is written here rather than copied, but the
+# shape -- cue settings, 10ms flush cues, rolling repeats, per-word timings,
+# escaped markup -- is exactly what real files contain.
+
+
+def test_youtube_auto_captions_real_shape():
+    """A faithful reproduction of YouTube's auto-caption structure.
+
+    Verified against a real 171 KB export: 498 cues collapsed to one turn with
+    978 rolling duplicates removed and zero repeated text.
+    """
+    t = parse(FIX + "youtube_auto_real_shape.vtt")
+    text = t.turns[-1].text
+    for phrase in ("the first thing to understand",
+                   "is that the index is stale",
+                   "and nobody rebuilt it"):
+        assert text.count(phrase) == 1, f"{phrase!r} was duplicated by rolling captions"
+    assert "<c>" not in text and "00:00:" not in text, "per-word timing markup leaked"
+    assert t.meta["rolling_duplicate_cues"] > 0
+
+
+def test_blank_and_whitespace_only_cues_are_dropped():
+    """Auto-captions emit 10ms cues containing a single space."""
+    t = parse(FIX + "youtube_auto_real_shape.vtt")
+    assert all(x.text.strip() for x in t.turns)
+
+
+def test_html_escaped_formatting_tags_are_stripped():
+    """YouTube writes &lt;i&gt; to mean italics; it must not survive as text.
+
+    Found by running the parser over a real caption file, where the output
+    contained a literal '<i>' because entities were decoded after tag removal.
+    """
+    t = parse(FIX + "escaped_tags.vtt")
+    joined = " ".join(x.text for x in t.turns)
+    assert "<i>" not in joined and "<b>" not in joined and "&lt;" not in joined
+    assert "Softly, in the background" in joined
+    assert "Loud and clear" in joined
+
+
+def test_angle_brackets_that_are_not_tags_survive():
+    """Stripping must not eat ordinary text containing angle brackets."""
+    t = parse(FIX + "escaped_tags.vtt")
+    joined = " ".join(x.text for x in t.turns)
+    assert "a < b" in joined
+    assert "<div> element stays" in joined

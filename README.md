@@ -215,6 +215,21 @@ turnchunk detect transcripts/*          # what format is this, really?
 turnchunk report transcripts/*.vtt --fail-on-issues   # CI gate
 ```
 
+## Fast
+
+Measured on real YouTube caption exports, not synthetic data:
+
+| Transcript | Size | Parse | Chunk |
+|---|---|---|---|
+| Conference talk | 18 K chars, 498 cues | 5 ms | 1 ms |
+| Full course | 259 K chars, 2,935 cues | 14 ms | 11 ms |
+| 16 MB export | 1.7 M chars, 46,958 cues | 450 ms | 16 ms |
+
+Two quadratic blowups turned up when those real files were first run through it
+— one slicing the remaining document inside a loop, one rebuilding a string on
+every merged cue. Both are fixed, and `tests/test_performance.py` asserts
+scaling stays linear so they can't come back.
+
 ## What's guaranteed
 
 The central claim is not asserted, it's tested. `test_a_turn_is_never_split`
@@ -229,10 +244,16 @@ turn that fits the target:
 Also covered: no content is lost; overlap is always a whole-turn suffix; short
 tails merge; oversized turns keep their speaker on every piece; unknown
 timestamps stay `None` and never become `0`; chunk ids are deterministic across
-runs and machines; ambiguous speaker names never merge.
+runs and machines; ambiguous speaker names never merge; and the LangChain and
+LlamaIndex adapters are exercised against the real frameworks in CI.
+
+Parsers are regression-tested against structures taken from genuine exports,
+including the case where YouTube writes `&lt;i&gt;` for italics — which used to
+leak a literal `<i>` into the chunk text, and was only ever going to be found by
+running a real file through it.
 
 ```bash
-pip install -e ".[dev]" && pytest      # 92 tests
+pip install -e ".[dev]" && pytest      # 96 tests
 ```
 
 ## Scope

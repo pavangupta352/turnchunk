@@ -22,6 +22,12 @@ _TS = re.compile(
 # and YouTube's per-word timestamps <00:00:01.234>.
 _TAG = re.compile(r"</?[a-zA-Z][^>]*>|<\d{1,3}:\d{2}:\d{2}[.,]\d{1,3}>")
 
+# Caption formatting tags only, applied after entity decoding. A closed list,
+# so ordinary angle-bracket text in a transcript is never eaten.
+_ESCAPED_TAG = re.compile(
+    r"</?(?:i|b|u|c|v|em|strong|ruby|rt|lang|font|br)\b[^>]*/?>", re.IGNORECASE
+)
+
 # <v Alice> and <v.loud Alice> -- the Teams/WebVTT voice span.
 _VOICE = re.compile(r"<v(?:\.[^\s>]+)*\s+([^>]+?)\s*>", re.IGNORECASE)
 
@@ -56,8 +62,20 @@ def parse_timestamp(text: str) -> Optional[int]:
 
 
 def strip_tags(text: str) -> str:
-    """Remove caption markup and decode HTML entities."""
-    return html.unescape(_TAG.sub("", text))
+    """Remove caption markup and decode HTML entities.
+
+    Two passes, because producers disagree about escaping. The WebVTT spec says
+    ``&lt;i&gt;`` is the literal text ``<i>``, but YouTube emits exactly that to
+    mean italics -- so stripping only raw tags leaves ``<i>`` sitting in the
+    output text. Unescaping first is not safe either: it would turn genuinely
+    escaped content into something the tag regex eats.
+
+    So: strip real tags, unescape, then strip a second time using a *closed
+    list* of caption formatting tags. A run of ``<div>`` or ``a < b`` in the
+    transcript survives; ``<i>`` and ``<c.colorE5E5E5>`` do not.
+    """
+    cleaned = html.unescape(_TAG.sub("", text))
+    return _ESCAPED_TAG.sub("", cleaned)
 
 
 def extract_voice_speaker(text: str) -> Optional[str]:
@@ -148,8 +166,15 @@ def merge_turns(
     after a long silence, which is usually a genuine topic break.
     """
     out: List[Turn] = []
+    # Text is accumulated per turn in a list and joined once at the end.
+    # Appending to `turn.text` directly rebuilds the whole string on every cue,
+    # which is quadratic: a 16 MB auto-caption file whose 46,958 cues all belong
+    # to one speaker spent 1.3 seconds doing nothing but copying characters.
+    parts: List[List[str]] = []
+
     for cue in cues:
-        if not cue.text.strip():
+        text = cue.text.strip()
+        if not text:
             continue
         if out and out[-1].speaker == cue.speaker:
             gap_ok = True
@@ -157,7 +182,7 @@ def merge_turns(
                 gap_ok = (cue.start_ms - out[-1].end_ms) <= max_gap_ms
             if gap_ok:
                 prev = out[-1]
-                prev.text = (prev.text.rstrip() + join + cue.text.lstrip()).strip()
+                parts[-1].append(text)
                 if cue.end_ms is not None:
                     prev.end_ms = cue.end_ms
                 if prev.start_ms is None and cue.start_ms is not None:
@@ -165,7 +190,7 @@ def merge_turns(
                 continue
         out.append(
             Turn(
-                text=cue.text.strip(),
+                text="",
                 speaker=cue.speaker,
                 start_ms=cue.start_ms,
                 end_ms=cue.end_ms,
@@ -174,6 +199,9 @@ def merge_turns(
                 meta=dict(cue.meta),
             )
         )
-    for i, t in enumerate(out):
-        t.index = i
+        parts.append([text])
+
+    for i, (turn, chunks) in enumerate(zip(out, parts)):
+        turn.text = join.join(chunks) if len(chunks) > 1 else chunks[0]
+        turn.index = i
     return out

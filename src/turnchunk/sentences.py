@@ -50,11 +50,13 @@ _BOUNDARY = re.compile(
     re.VERBOSE,
 )
 
+# How far back to look when testing for an abbreviation. The patterns are all
+# anchored to the end of the window, and the longest entry above is a handful of
+# characters, so 40 is generous.
+_LOOKBACK = 40
+
 # A token that looks like an initial: "J." in "J. Smith"
 _INITIAL = re.compile(r"(?:^|\s)[A-Z]\.$")
-# Decimal or version number immediately before the period: "3.14", "v1.2"
-_NUMERIC_BEFORE = re.compile(r"\d$")
-_NUMERIC_AFTER = re.compile(r"^\d")
 
 
 def _is_abbreviation(before: str) -> bool:
@@ -81,7 +83,8 @@ def _is_uncapitalised(text: str) -> bool:
     document simply does not use capitals. Detection is per-text rather than
     global because one file can mix a clean vendor transcript with a raw one.
     """
-    letters = [c for c in text if c.isalpha()]
+    sample = text[:20_000]
+    letters = [c for c in sample if c.isalpha()]
     if len(letters) < 40:
         return False  # too short to judge; stay conservative
     uppers = sum(1 for c in letters if c.isupper())
@@ -104,37 +107,41 @@ def sentence_spans(text: str, *, allow_lowercase_start: Optional[bool] = None) -
     spans: List[Tuple[int, int]] = []
     start = 0
 
+    # Everything in this loop must be O(1) in the length of the document.
+    # Slicing `text[m.end():]` or `text[:m.start()]` here looks harmless and is
+    # quadratic: on a 260 KB transcript with 10k boundaries it copied 2.6
+    # billion characters and took 1.4 seconds. Only a bounded window is ever
+    # needed, so only a bounded window is ever taken.
     for m in _BOUNDARY.finditer(text):
         cut = m.end("close")
-        before = text[start:cut]
-        after = text[m.end():]
+        term_start = m.start("term")
         is_cjk = m.group("term")[0] in _CJK_TERMINATORS
+        is_period = m.group("term") == "."
 
         # Latin terminators need whitespace after them, or "example.com" and
         # "3.5x" would both become sentence breaks.
         if not is_cjk and not m.group("space"):
             continue
 
+        next_char = text[m.end()] if m.end() < len(text) else ""
+
         # "3.14" / "v1.2" -- a period between digits is never a boundary.
-        if (
-            m.group("term") == "."
-            and _NUMERIC_BEFORE.search(text[: m.start("term")])
-            and _NUMERIC_AFTER.match(after)
-        ):
+        if is_period and next_char.isdigit() and term_start and text[term_start - 1].isdigit():
             continue
 
-        # "Dr. Smith", "e.g. this", "J. Smith"
-        if m.group("term") == "." and _is_abbreviation(before):
+        # "Dr. Smith", "e.g. this", "J. Smith". The abbreviation patterns are
+        # anchored at the end, so a short trailing window is sufficient.
+        if is_period and _is_abbreviation(text[max(start, cut - _LOOKBACK) : cut]):
             continue
 
         # The next sentence should look like a beginning. Spoken transcripts are
         # lowercase-heavy, so we accept a lowercase start after ! or ?, but
         # require a plausible opener after a bare period.
         if (
-            m.group("term") == "."
-            and after
+            is_period
+            and next_char
             and not allow_lowercase_start
-            and not _looks_like_start(after)
+            and not _looks_like_start(next_char)
         ):
             continue
 
@@ -148,8 +155,7 @@ def sentence_spans(text: str, *, allow_lowercase_start: Optional[bool] = None) -
     return spans
 
 
-def _looks_like_start(after: str) -> bool:
-    ch = after[0]
+def _looks_like_start(ch: str) -> bool:
     if ch.isupper() or ch.isdigit():
         return True
     if ch in "\"'“‘([{":

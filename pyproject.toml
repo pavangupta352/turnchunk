@@ -33,7 +33,7 @@ classifiers = [
 dependencies = []
 
 [project.optional-dependencies]
-dev = ["pytest>=7", "pytest-cov"]
+dev = ["pytest>=7", "pytest-cov", "ruff", "langchain-core", "llama-index-core", "Pillow"]
 
 [project.scripts]
 turnchunk = "turnchunk.cli:main"
