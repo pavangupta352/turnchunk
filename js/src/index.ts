@@ -17,7 +17,7 @@
  * conformance corpus.
  */
 
-export const VERSION = "0.2.0";
+export const VERSION = "0.3.0";
 
 export {
   DEFAULT_SEPARATOR,
@@ -44,6 +44,7 @@ export type { ParseOptions, TopLevelParseOptions } from "./parsers/index.js";
 export { sentenceSpans, splitSentences } from "./sentences.js";
 
 export {
+  MAX_MERGE_LABELS,
   buildSpeakerMap,
   canonicalKey,
   isGenericLabel,

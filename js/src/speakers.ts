@@ -80,9 +80,19 @@ function pickDisplay(members: string[], counts: Record<string, number>): string 
   return stripRole(best);
 }
 
+/**
+ * Above this many distinct labels, partial-name merging is skipped.
+ *
+ * The merge is inherently a comparison between labels, and a transcript with
+ * thousands of distinct speakers is a misparse or a hostile file rather than a
+ * real conversation. Case and punctuation folding still runs.
+ */
+export const MAX_MERGE_LABELS = 1000;
+
 export interface SpeakerMapOptions {
   counts?: Record<string, number>;
   mergePartialNames?: boolean;
+  maxMergeLabels?: number;
 }
 
 /** Map every raw label to its resolved display name. */
@@ -90,7 +100,11 @@ export function buildSpeakerMap(
   names: Iterable<string>,
   opts: SpeakerMapOptions = {},
 ): Record<string, string> {
-  const { counts = {}, mergePartialNames = true } = opts;
+  const {
+    counts = {},
+    mergePartialNames = true,
+    maxMergeLabels = MAX_MERGE_LABELS,
+  } = opts;
   const raw = [...new Set([...names].filter(Boolean))];
   if (!raw.length) return {};
 
@@ -109,11 +123,31 @@ export function buildSpeakerMap(
   // Pass 2 -- merge partial names into their unambiguous full form. Generic
   // diarizer labels are never merged: SPEAKER_00 and SPEAKER_01 are different
   // people by definition.
-  if (mergePartialNames) {
+  if (mergePartialNames && groups.size <= maxMergeLabels) {
     const human = [...groups.keys()].filter((k) => !isGenericLabel(display.get(k)!));
+
+    // Compare each label only against labels sharing a token with it.
+    // Comparing every label against every other is quadratic, and a crafted
+    // upload manufacturing thousands of "speakers" turned that into seconds
+    // of CPU from a single file.
+    const byToken = new Map<string, string[]>();
+    for (const key of human) {
+      for (const token of new Set(tokens(key))) {
+        const list = byToken.get(token);
+        if (list) list.push(key);
+        else byToken.set(token, [key]);
+      }
+    }
+
     const alias = new Map<string, string>();
     for (const short of human) {
-      const candidates = human.filter((f) => f !== short && compatible(short, f));
+      const seen = new Set<string>();
+      for (const token of new Set(tokens(short))) {
+        for (const k of byToken.get(token) ?? []) seen.add(k);
+      }
+      // Initial forms ("j smith") share the surname token with the full name,
+      // so the shared-token index still reaches them.
+      const candidates = [...seen].filter((f) => f !== short && compatible(short, f));
       // Only merge when there is exactly one possible match. "J. Smith" with
       // both "John Smith" and "Jane Smith" present stays separate.
       if (candidates.length === 1) alias.set(short, candidates[0]!);
@@ -138,6 +172,7 @@ export function buildSpeakerMap(
 
 export interface ResolveOptions {
   mergePartialNames?: boolean;
+  maxMergeLabels?: number;
   rename?: Record<string, string>;
 }
 
@@ -146,7 +181,7 @@ export function resolveSpeakers(
   turns: TurnsLike,
   opts: ResolveOptions = {},
 ): { turns: Turn[]; mapping: Record<string, string> } {
-  const { mergePartialNames = true, rename } = opts;
+  const { mergePartialNames = true, maxMergeLabels = MAX_MERGE_LABELS, rename } = opts;
   const items = turnsFrom(turns);
 
   const counts: Record<string, number> = {};
@@ -155,7 +190,11 @@ export function resolveSpeakers(
     if (name) counts[name] = (counts[name] ?? 0) + 1;
   }
 
-  const mapping = buildSpeakerMap(Object.keys(counts), { counts, mergePartialNames });
+  const mapping = buildSpeakerMap(Object.keys(counts), {
+    counts,
+    mergePartialNames,
+    maxMergeLabels,
+  });
 
   if (rename) {
     // Overrides apply to both the raw label and its resolved form.

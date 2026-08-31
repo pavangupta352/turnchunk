@@ -313,9 +313,8 @@ function fromAws(data: Json): Turn[] {
 function googleTime(value: Json): number | null {
   if (value === null || value === undefined) return null;
   if (typeof value === "object") {
-    const secs = Number(value["seconds"] ?? 0);
-    const nanos = Number(value["nanos"] ?? 0);
-    return Math.round(secs * 1000 + nanos / 1e6);
+    const total = Number(value["seconds"] ?? 0) * 1000 + Number(value["nanos"] ?? 0) / 1e6;
+    return Number.isFinite(total) ? Math.round(total) : null;
   }
   let text = String(value).trim();
   if (text.endsWith("s")) text = text.slice(0, -1);
@@ -359,13 +358,14 @@ function fromAzure(data: Json): Turn[] {
     const best = (phrase["nBest"] ?? [{}])[0] ?? {};
     const text = String(best["display"] ?? best["lexical"] ?? "").trim();
     if (!text) continue;
-    const offset = phrase["offsetInTicks"];
-    const duration = phrase["durationInTicks"];
-    const startMs = offset !== undefined && offset !== null ? Math.round(Number(offset) / 10_000) : null;
-    const endMs =
-      offset !== undefined && offset !== null && duration !== undefined && duration !== null
-        ? Math.round((Number(offset) + Number(duration)) / 10_000)
-        : null;
+    // Ticks are 100-nanosecond units; guard non-finite values like everywhere else.
+    const ticks = (o: Json, d: Json = 0): number | null => {
+      if (o === undefined || o === null) return null;
+      const total = Number(o) + Number(d ?? 0);
+      return Number.isFinite(total) ? Math.round(total / 10_000) : null;
+    };
+    const startMs = ticks(phrase["offsetInTicks"]);
+    const endMs = ticks(phrase["offsetInTicks"], phrase["durationInTicks"]);
     out.push(makeTurn({
       text, speaker: speakerOf(phrase["speaker"]), startMs, endMs, index: out.length,
     }));

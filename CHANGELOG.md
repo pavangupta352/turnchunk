@@ -4,6 +4,44 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.3.0] — 2026-08-31
+
+Found by attacking the published library with hostile input. None of these
+produce a wrong answer, which is why the correctness suite never caught them —
+they produce a wrong *capability*.
+
+### Security
+
+- **`parse()` no longer reads the filesystem.** It previously opened a file
+  whenever the string it was given happened to be a valid path. Applications
+  routinely call `parse(request.body)` on user input, which turned that into
+  arbitrary local file disclosure: a config or log file that happened to parse
+  came back as "speaker turns". A `str` is now always transcript content.
+- **Bounded speaker resolution.** `build_speaker_map()` compared every label
+  against every other, and the plain-text parser treats any `Word: text` line
+  as a speaker — so a 6,000-line uploaded log manufactured 6,000 fake speakers
+  and cost **13.7 seconds of CPU per request**. Candidates are now found through
+  a token index, and partial-name merging is skipped above
+  `MAX_MERGE_LABELS` (1000) distinct labels. Same input now takes 30ms.
+
+### Breaking
+
+- `parse("meeting.vtt")` no longer reads that file. Use `parse_file()`, or pass
+  a `pathlib.Path`. The error message says so explicitly. `parse(text)` is
+  unchanged.
+- The adapters follow the same rule and gained explicit file variants:
+  `TurnChunkSplitter.split_transcript_file()`,
+  `TurnChunkNodeParser.parse_transcript_file()`,
+  `ConversationChunker.chunk_file()`.
+
+### Fixed
+
+- `NaN` and `Infinity` in vendor JSON raised `OverflowError` from `round()`.
+  Python's `json` module accepts both, and an unexpected exception type from a
+  parser is worse than a wrong number because callers cannot defend against it.
+  Every time converter now returns `None` for non-finite values, in both
+  languages.
+
 ## [0.2.0] — 2026-08-28
 
 ### Added

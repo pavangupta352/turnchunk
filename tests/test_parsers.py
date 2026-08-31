@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-from turnchunk import UnknownFormatError, detect_format, parse
+from turnchunk import UnknownFormatError, detect_format, parse, parse_file
 
 FIX = "tests/fixtures/"
 
@@ -20,13 +20,13 @@ def test_detects_formats_from_content_not_extension():
 
 def test_srt_is_not_claimed_by_the_vtt_parser():
     """SubRip uses ',' for fractions and WebVTT uses '.'; detection must not confuse them."""
-    assert parse(FIX + "basic.srt").format == "srt"
+    assert parse_file(FIX + "basic.srt").format == "srt"
 
 
 # ------------------------------------------------------------------ VTT ----
 
 def test_teams_voice_spans():
-    t = parse(FIX + "teams.vtt")
+    t = parse_file(FIX + "teams.vtt")
     assert t.speakers == ["Alice Chen", "Bob Ferreira"]
     assert len(t) == 2, "consecutive cues by one speaker must merge into one turn"
     assert "twelve percent increase" in t.turns[0].text
@@ -35,7 +35,7 @@ def test_teams_voice_spans():
 
 def test_youtube_rolling_captions_are_deduplicated():
     """Scrolling captions repeat the previous cue; naive parsers double the text."""
-    t = parse(FIX + "youtube_rolling.vtt")
+    t = parse_file(FIX + "youtube_rolling.vtt")
     assert t.meta["rolling_duplicate_cues"] == 3
     text = t.turns[0].text
     assert text.count("the first thing we need to") == 1
@@ -55,7 +55,7 @@ def test_inline_word_timestamps_and_entities_are_stripped():
 
 
 def test_zoom_inline_speakers_without_breaking_on_colons():
-    t = parse(FIX + "zoom.vtt")
+    t = parse_file(FIX + "zoom.vtt")
     assert t.speakers == ["Priya Raman", "Tom Ableton"]
     last = t.turns[-1]
     assert last.speaker == "Priya Raman"
@@ -82,7 +82,7 @@ def test_note_and_style_blocks_are_skipped():
 # ------------------------------------------------------------------ SRT ----
 
 def test_srt_strips_markup_and_reads_inline_speakers():
-    t = parse(FIX + "basic.srt")
+    t = parse_file(FIX + "basic.srt")
     assert t.speakers == ["Alice", "Bob"]
     assert t.turns[1].text == "Only if neither party gives notice."
     assert t.turns[0].start_ms == 1000
@@ -91,14 +91,14 @@ def test_srt_strips_markup_and_reads_inline_speakers():
 # ---------------------------------------------------------------- plain ----
 
 def test_otter_style_name_then_timestamp_on_its_own_line():
-    t = parse(FIX + "otter.txt")
+    t = parse_file(FIX + "otter.txt")
     assert t.speakers == ["Alice Chen", "Bob Ferreira"]
     assert t.turns[0].start_ms == 1000
     assert "twelve percent increase" in t.turns[0].text
 
 
 def test_bracketed_timestamps_and_same_speaker_merging():
-    t = parse(FIX + "bracketed.txt")
+    t = parse_file(FIX + "bracketed.txt")
     assert len(t) == 2, "Bob's two consecutive lines should be one turn"
     assert t.turns[1].speaker == "Bob"
     assert "historically" in t.turns[1].text
@@ -133,7 +133,7 @@ def test_unknown_format_raises_with_a_useful_message():
 
 
 def test_parse_accepts_path_string_and_file_object():
-    a = parse(FIX + "teams.vtt")
+    a = parse_file(FIX + "teams.vtt")
     with open(FIX + "teams.vtt") as fh:
         b = parse(fh)
     assert [t.text for t in a] == [t.text for t in b]
@@ -158,7 +158,7 @@ def test_youtube_auto_captions_real_shape():
     Verified against a real 171 KB export: 498 cues collapsed to one turn with
     978 rolling duplicates removed and zero repeated text.
     """
-    t = parse(FIX + "youtube_auto_real_shape.vtt")
+    t = parse_file(FIX + "youtube_auto_real_shape.vtt")
     text = t.turns[-1].text
     for phrase in ("the first thing to understand",
                    "is that the index is stale",
@@ -170,7 +170,7 @@ def test_youtube_auto_captions_real_shape():
 
 def test_blank_and_whitespace_only_cues_are_dropped():
     """Auto-captions emit 10ms cues containing a single space."""
-    t = parse(FIX + "youtube_auto_real_shape.vtt")
+    t = parse_file(FIX + "youtube_auto_real_shape.vtt")
     assert all(x.text.strip() for x in t.turns)
 
 
@@ -180,7 +180,7 @@ def test_html_escaped_formatting_tags_are_stripped():
     Found by running the parser over a real caption file, where the output
     contained a literal '<i>' because entities were decoded after tag removal.
     """
-    t = parse(FIX + "escaped_tags.vtt")
+    t = parse_file(FIX + "escaped_tags.vtt")
     joined = " ".join(x.text for x in t.turns)
     assert "<i>" not in joined and "<b>" not in joined and "&lt;" not in joined
     assert "Softly, in the background" in joined
@@ -189,7 +189,7 @@ def test_html_escaped_formatting_tags_are_stripped():
 
 def test_angle_brackets_that_are_not_tags_survive():
     """Stripping must not eat ordinary text containing angle brackets."""
-    t = parse(FIX + "escaped_tags.vtt")
+    t = parse_file(FIX + "escaped_tags.vtt")
     joined = " ".join(x.text for x in t.turns)
     assert "a < b" in joined
     assert "<div> element stays" in joined

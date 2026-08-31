@@ -253,7 +253,7 @@ def test_token_budget_via_size_fn():
 
 
 def test_accepts_dicts_and_transcripts():
-    from turnchunk import parse
-    t = parse("tests/fixtures/teams.vtt")
+    from turnchunk import parse_file
+    t = parse_file("tests/fixtures/teams.vtt")
     assert chunk(t, target=200)
     assert chunk([{"text": "hi", "speaker": "A", "index": 0}], target=100)

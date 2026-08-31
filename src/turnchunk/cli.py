@@ -19,7 +19,7 @@ from typing import List, Optional, Sequence
 from . import __version__
 from .chunker import DEFAULT_TEMPLATE, chunk, render_turn
 from .naive import recursive_split
-from .parsers import FORMATS, UnknownFormatError, detect_format, parse
+from .parsers import FORMATS, UnknownFormatError, detect_format, parse_file
 from .render import format_timestamp, to_context
 from .speakers import resolve_speakers
 from .types import Transcript
@@ -77,7 +77,7 @@ def _expand(patterns: Sequence[str]) -> List[str]:
 
 
 def _load(path: str, args) -> Transcript:
-    t = parse(
+    t = parse_file(
         path,
         format=getattr(args, "format", None),
         max_gap_ms=getattr(args, "max_gap", None),
@@ -295,7 +295,7 @@ def cmd_stats(args) -> int:
 
 
 def cmd_speakers(args) -> int:
-    t = parse(args.file, format=args.format)
+    t = parse_file(args.file, format=args.format)
     _, mapping = resolve_speakers(t.turns, merge_partial_names=not args.no_merge)
     resolved = {}
     for raw, name in mapping.items():

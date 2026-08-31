@@ -16,7 +16,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from turnchunk import chunk, parse
+from turnchunk import chunk, parse_file
 from turnchunk.sentences import split_sentences
 from turnchunk.speakers import build_speaker_map
 
@@ -75,7 +75,7 @@ def main() -> None:
 
     for name in FIXTURES:
         path = ROOT / "tests" / "fixtures" / name
-        t = parse(str(path))
+        t = parse_file(path)
         corpus["parse"][name] = {
             "format": t.format,
             "turns": [

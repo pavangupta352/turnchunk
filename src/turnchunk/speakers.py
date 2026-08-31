@@ -86,11 +86,23 @@ def _compatible(short_key: str, full_key: str) -> bool:
     return len(s) < len(f) and all(t in f for t in s)
 
 
+#: Above this many distinct labels, partial-name merging is skipped.
+#:
+#: The merge is inherently a comparison between labels, and a transcript with
+#: thousands of distinct speakers is a misparse or a hostile file rather than a
+#: real conversation -- the plain-text parser treats any "Word: text" line as a
+#: speaker, so an uploaded log or YAML file can manufacture them by the
+#: thousand. Case and punctuation folding still runs; only the (more expensive,
+#: and here meaningless) partial-name step is dropped.
+MAX_MERGE_LABELS = 1000
+
+
 def build_speaker_map(
     names: Iterable[str],
     *,
     counts: Optional[Dict[str, int]] = None,
     merge_partial_names: bool = True,
+    max_merge_labels: int = MAX_MERGE_LABELS,
 ) -> Dict[str, str]:
     """Map every raw label to its resolved display name.
 
@@ -100,6 +112,8 @@ def build_speaker_map(
         merge_partial_names: merge "John" into "John Smith" when exactly one
             longer name is compatible. Turn this off to only fold case and
             punctuation variants.
+        max_merge_labels: skip partial-name merging above this many distinct
+            labels. See :data:`MAX_MERGE_LABELS`.
 
     Returns:
         ``{raw_label: resolved_name}`` covering every input label.
@@ -119,14 +133,31 @@ def build_speaker_map(
         display[key] = _pick_display(members, counts)
 
     # Pass 2 -- merge partial names into their unambiguous full form.
-    if merge_partial_names:
+    if merge_partial_names and len(groups) <= max_merge_labels:
         keys = list(groups)
         # Generic diarizer labels are never merged into each other: SPEAKER_00
         # and SPEAKER_01 are different people by definition.
         human = [k for k in keys if not is_generic_label(display[k])]
+
+        # Compare each label only against labels that share a token with it.
+        # Comparing every label against every other is quadratic, and a crafted
+        # upload that manufactures thousands of "speakers" turned that into
+        # 13 seconds of CPU from a single file.
+        by_token: Dict[str, List[str]] = {}
+        for key in human:
+            for token in set(_tokens(key)):
+                by_token.setdefault(token, []).append(key)
+
         alias: Dict[str, str] = {}
         for short in human:
-            candidates = [f for f in human if f != short and _compatible(short, f)]
+            seen_keys = set()
+            for token in set(_tokens(short)):
+                seen_keys.update(by_token.get(token, ()))
+            # Initial forms ("j smith") share the surname token with the full
+            # name, so the shared-token index still reaches them.
+            candidates = [
+                f for f in seen_keys if f != short and _compatible(short, f)
+            ]
             # Only merge when there is exactly one possible match. "J. Smith"
             # with both "John Smith" and "Jane Smith" present stays separate.
             if len(candidates) == 1:

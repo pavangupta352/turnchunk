@@ -28,6 +28,7 @@ suffix, and Azure counts 100-nanosecond ticks.
 from __future__ import annotations
 
 import json as _json
+import math
 from typing import Any, Dict, List, Optional, Sequence
 
 from ..types import Transcript, Turn
@@ -92,21 +93,30 @@ def _is_turn_list(items: Sequence[Any]) -> bool:
 # --------------------------------------------------------------- helpers ----
 
 def _sec_to_ms(v: Any) -> Optional[int]:
+    """Seconds to milliseconds. NaN and infinity become None, not a crash.
+
+    Python's json module accepts the non-standard NaN/Infinity literals, so a
+    vendor file containing them would otherwise reach round() and raise
+    OverflowError -- an exception type callers do not expect from a parser.
+    """
     if v is None:
         return None
     try:
-        return round(float(v) * 1000)
+        f = float(v)
     except (TypeError, ValueError):
         return None
+    return round(f * 1000) if math.isfinite(f) else None
 
 
 def _ms(v: Any) -> Optional[int]:
+    """Milliseconds through, with the same NaN/infinity guard as _sec_to_ms."""
     if v is None:
         return None
     try:
-        return round(float(v))
+        f = float(v)
     except (TypeError, ValueError):
         return None
+    return round(f) if math.isfinite(f) else None
 
 
 def _speaker(value: Any, prefix: str = "SPEAKER") -> Optional[str]:
@@ -369,9 +379,13 @@ def _google_time(value: Any) -> Optional[int]:
     if value is None:
         return None
     if isinstance(value, dict):  # protobuf {seconds, nanos}
-        secs = float(value.get("seconds", 0))
-        nanos = float(value.get("nanos", 0))
-        return round(secs * 1000 + nanos / 1e6)
+        try:
+            secs = float(value.get("seconds", 0))
+            nanos = float(value.get("nanos", 0))
+        except (TypeError, ValueError):
+            return None
+        total = secs * 1000 + nanos / 1e6
+        return round(total) if math.isfinite(total) else None
     text = str(value).strip()
     if text.endswith(_GOOGLE_TIME):
         text = text[:-1]
@@ -416,6 +430,16 @@ def _from_google(data: Dict[str, Any]) -> List[Turn]:
     return _group_words(normalised, text_key="text", to_ms=_google_time)
 
 
+def _ticks_to_ms(offset: Any, duration: Any = None) -> Optional[int]:
+    if offset is None:
+        return None
+    try:
+        total = float(offset) + (float(duration) if duration is not None else 0.0)
+    except (TypeError, ValueError):
+        return None
+    return round(total / 10_000) if math.isfinite(total) else None
+
+
 def _from_azure(data: Dict[str, Any]) -> List[Turn]:
     """Azure Speech batch transcription. Time is in 100-nanosecond ticks."""
     out: List[Turn] = []
@@ -426,14 +450,9 @@ def _from_azure(data: Dict[str, Any]) -> List[Turn]:
         text = str(best.get("display") or best.get("lexical") or "").strip()
         if not text:
             continue
-        offset = phrase.get("offsetInTicks")
-        duration = phrase.get("durationInTicks")
-        start_ms = round(float(offset) / 10_000) if offset is not None else None
-        end_ms = (
-            round((float(offset) + float(duration)) / 10_000)
-            if offset is not None and duration is not None
-            else None
-        )
+        # Ticks are 100-nanosecond units; guard the same way as everywhere else.
+        start_ms = _ticks_to_ms(phrase.get("offsetInTicks"))
+        end_ms = _ticks_to_ms(phrase.get("offsetInTicks"), phrase.get("durationInTicks"))
         out.append(Turn(
             text=text,
             speaker=_speaker(phrase.get("speaker")),

@@ -14,11 +14,17 @@ Zero dependencies. Every chunk boundary falls on a speaker turn boundary.
 from __future__ import annotations
 
 from .chunker import chunk, render_turn, split_oversized_turn
-from .parsers import FORMATS, UnknownFormatError, detect_format, parse
+from .parsers import (
+    FORMATS,
+    UnknownFormatError,
+    detect_format,
+    parse,
+    parse_file,
+)
 from .sentences import split_sentences
 from .types import Chunk, Transcript, Turn
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 __all__ = [
     "FORMATS",
@@ -30,6 +36,7 @@ __all__ = [
     "chunk",
     "detect_format",
     "parse",
+    "parse_file",
     "render_turn",
     "split_oversized_turn",
     "split_sentences",

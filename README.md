@@ -63,14 +63,19 @@ Raspberry Pi, inside an air-gapped network.
 ## 30 seconds
 
 ```python
-from turnchunk import parse, chunk
+from turnchunk import parse_file, chunk
 
-turns  = parse("meeting.vtt")          # format auto-detected from content
+turns  = parse_file("meeting.vtt")     # format auto-detected from content
 chunks = chunk(turns, target=2000, overlap=200)
 
 for c in chunks:
     print(c.primary_speaker, c.start_ms, c.text[:80])
 ```
+
+Already have the text? `parse(text)` takes content directly. It **never touches
+the filesystem** — a string is always transcript content, never a path, so
+`parse(request.body)` on untrusted input cannot be tricked into reading a file
+off your server. Use `parse_file()` for paths you control.
 
 ```ts
 import { parse, chunk } from "turnchunk";
@@ -107,6 +112,18 @@ c.end_ms            # 62300
 c.turn_start        # 5          -> index back into the transcript
 c.overlap_indices   # [0]        -> which turns were carried from the last chunk
 ```
+
+## Safe to point at user uploads
+
+`parse()` treats a `str` as transcript **content**, always. It never opens a
+file, so handing it untrusted input cannot disclose anything from your disk.
+`parse_file()` is the only thing that reads from the filesystem, and a
+`pathlib.Path` also works where a file is unambiguously meant.
+
+Speaker resolution is bounded too. Transcripts with implausibly many distinct
+speakers — usually a misparsed log or a hostile upload rather than a real
+conversation — skip the partial-name merging step rather than doing quadratic
+work on it. Case and punctuation folding still runs.
 
 ## Reads anything
 
@@ -292,7 +309,7 @@ leak a literal `<i>` into the chunk text, and was only ever going to be found by
 running a real file through it.
 
 ```bash
-pip install -e ".[dev]" && pytest      # 144 Python tests
+pip install -e ".[dev]" && pytest      # 159 Python tests
 cd js && npm ci && npm test            # 87 TypeScript conformance tests
 ```
 

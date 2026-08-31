@@ -16,7 +16,7 @@ from pathlib import Path
 
 import pytest
 
-from turnchunk import chunk, parse
+from turnchunk import chunk, parse_file
 from turnchunk.sentences import split_sentences
 from turnchunk.speakers import build_speaker_map
 
@@ -34,7 +34,7 @@ def test_corpus_is_present_and_non_trivial():
 @pytest.mark.parametrize("name", sorted(CORPUS["parse"]))
 def test_parse_matches_corpus(name):
     expected = CORPUS["parse"][name]
-    t = parse(str(FIXTURES / name))
+    t = parse_file(FIXTURES / name)
     assert t.format == expected["format"]
     got = [
         {
@@ -48,7 +48,7 @@ def test_parse_matches_corpus(name):
 
 @pytest.mark.parametrize("name", sorted(CORPUS["chunk"]))
 def test_chunk_matches_corpus(name):
-    t = parse(str(FIXTURES / name))
+    t = parse_file(FIXTURES / name)
     for case in CORPUS["chunk"][name]:
         chunks = chunk(t, source=name, **case["options"])
         got = [

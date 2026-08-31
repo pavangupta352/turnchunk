@@ -98,7 +98,6 @@ def capture() -> list[str]:
 def main() -> None:
     lines = capture()
     font = load_font(FONT_SIZE)
-    bold = load_font(FONT_SIZE)
 
     probe = Image.new("RGB", (10, 10))
     char_w = ImageDraw.Draw(probe).textlength("M", font=font)

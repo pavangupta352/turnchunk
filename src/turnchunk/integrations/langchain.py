@@ -15,6 +15,7 @@ from typing import Any, Iterable, List, Optional
 
 from ..chunker import chunk as _chunk
 from ..parsers import parse as _parse
+from ..parsers import parse_file as _parse_file
 from ..speakers import resolve_speakers
 
 
@@ -70,8 +71,8 @@ class TurnChunkSplitter:
         self.resolve_speaker_names = resolve_speaker_names
         self.chunk_kwargs = chunk_kwargs
 
-    def _chunks(self, source: Any, fmt: Optional[str] = None):
-        transcript = _parse(source, format=fmt)
+    def _chunks(self, source: Any, fmt: Optional[str] = None, from_file: bool = False):
+        transcript = _parse_file(source, format=fmt) if from_file else _parse(source, format=fmt)
         if self.resolve_speaker_names:
             resolve_speakers(transcript.turns)
         return _chunk(
@@ -84,11 +85,24 @@ class TurnChunkSplitter:
         )
 
     def split_transcript(self, source: Any, *, format: Optional[str] = None) -> List[Any]:
-        """Parse and chunk a transcript into Documents with full metadata."""
+        """Parse and chunk a transcript into Documents with full metadata.
+
+    Accepts the same inputs as :func:`turnchunk.parse`: a ``str`` is transcript
+    *content*, a :class:`pathlib.Path` is a file. Use the ``*_file`` variant to
+    read a path given as a string -- never pass untrusted input as a path.
+        """
         Document = _Document()
         return [
             Document(page_content=c.text, metadata=chunk_to_metadata(c))
             for c in self._chunks(source, format)
+        ]
+
+    def split_transcript_file(self, path: Any, *, format: Optional[str] = None) -> List[Any]:
+        """Read a transcript file from disk, then chunk it into Documents."""
+        Document = _Document()
+        return [
+            Document(page_content=c.text, metadata=chunk_to_metadata(c))
+            for c in self._chunks(path, format, from_file=True)
         ]
 
     def split_text(self, text: str) -> List[str]:

@@ -18,6 +18,7 @@ from typing import Any, List, Optional, Sequence
 
 from ..chunker import chunk as _chunk
 from ..parsers import parse as _parse
+from ..parsers import parse_file as _parse_file
 from ..speakers import resolve_speakers
 from ..types import Chunk
 
@@ -41,7 +42,26 @@ class ConversationChunker:
         self.chunk_kwargs = chunk_kwargs
 
     def chunk(self, text: Any, *, format: Optional[str] = None) -> List[Chunk]:
+        """Chunk a transcript.
+
+    Accepts the same inputs as :func:`turnchunk.parse`: a ``str`` is transcript
+    *content*, a :class:`pathlib.Path` is a file. Use the ``*_file`` variant to
+    read a path given as a string -- never pass untrusted input as a path.
+        """
         transcript = _parse(text, format=format)
+        if self.resolve_speaker_names:
+            resolve_speakers(transcript.turns)
+        return _chunk(
+            transcript,
+            target=self.chunk_size,
+            overlap=self.chunk_overlap,
+            min_tail_ratio=self.min_tail_ratio,
+            **self.chunk_kwargs,
+        )
+
+    def chunk_file(self, path: Any, *, format: Optional[str] = None) -> List[Chunk]:
+        """Read a transcript file from disk, then chunk it."""
+        transcript = _parse_file(path, format=format)
         if self.resolve_speaker_names:
             resolve_speakers(transcript.turns)
         return _chunk(
