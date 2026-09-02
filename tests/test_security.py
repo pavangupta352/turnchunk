@@ -95,16 +95,30 @@ def test_many_distinct_speakers_does_not_burn_cpu():
 
 
 def test_speaker_resolution_scales_linearly():
-    def timed(n):
-        names = [f"Person{i} Surname{i}" for i in range(n)]
-        start = time.perf_counter()
-        build_speaker_map(names, max_merge_labels=10**9)  # force the merge path
-        return time.perf_counter() - start
+    """Catches a return to quadratic behaviour without flaking on shared runners.
 
-    small, large = timed(250), timed(1000)  # 4x the labels
+    A single ~3ms measurement is dominated by scheduler jitter on a busy CI
+    box, and one interruption in the small sample blew the ratio to 14x on a
+    macOS runner while the same commit passed everywhere else. So: baselines
+    large enough that jitter is a small fraction, and best-of-N, because an
+    interruption can only ever make a run slower -- the minimum is the honest
+    number. Quadratic code still shows ~16x for 4x input; linear sits near 1.
+    """
+    def timed(n, repeats=5):
+        names = [f"Person{i} Surname{i}" for i in range(n)]
+        best = float("inf")
+        for _ in range(repeats):
+            start = time.perf_counter()
+            build_speaker_map(names, max_merge_labels=10**9)  # force the merge path
+            best = min(best, time.perf_counter() - start)
+        return best
+
+    small, large = timed(1000), timed(4000)  # 4x the labels
     if small <= 0:
         return
-    assert (large / small) / 4 < 3.0, "speaker resolution scales super-linearly"
+    assert (large / small) / 4 < 3.0, (
+        f"speaker resolution scales super-linearly: {small*1000:.1f}ms -> {large*1000:.1f}ms"
+    )
 
 
 def test_merging_is_skipped_above_the_cap_but_folding_still_works():

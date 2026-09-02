@@ -40,10 +40,20 @@ def build_vtt(cues: int, speakers: int = 1) -> str:
     return "\n".join(out)
 
 
-def timed(fn):
-    t0 = time.perf_counter()
-    result = fn()
-    return result, time.perf_counter() - t0
+def timed(fn, repeats=5):
+    """Best-of-N wall clock.
+
+    An interruption from the scheduler can only make a sample slower, so the
+    minimum across repeats is the least-noisy estimate. Single measurements of
+    sub-10ms operations flake on shared CI runners.
+    """
+    result = None
+    best = float("inf")
+    for _ in range(repeats):
+        t0 = time.perf_counter()
+        result = fn()
+        best = min(best, time.perf_counter() - t0)
+    return result, best
 
 
 def growth(small: float, large: float, factor: int) -> float:
@@ -56,8 +66,8 @@ def growth(small: float, large: float, factor: int) -> float:
 # --------------------------------------------------------------------------
 
 def test_sentence_splitting_is_not_quadratic():
-    small = SENTENCE * 500
-    large = SENTENCE * 4000  # 8x the work
+    small = SENTENCE * 2000
+    large = SENTENCE * 16000  # 8x the work
     _, t_small = timed(lambda: split_sentences(small))
     _, t_large = timed(lambda: split_sentences(large))
     assert growth(t_small, t_large, 8) < 3.0, (
@@ -67,8 +77,8 @@ def test_sentence_splitting_is_not_quadratic():
 
 def test_merging_many_cues_from_one_speaker_is_not_quadratic():
     """The pathological real-world case: one speaker, tens of thousands of cues."""
-    _, t_small = timed(lambda: parse(build_vtt(2_000), format="vtt"))
-    _, t_large = timed(lambda: parse(build_vtt(16_000), format="vtt"))  # 8x
+    _, t_small = timed(lambda: parse(build_vtt(4_000), format="vtt"))
+    _, t_large = timed(lambda: parse(build_vtt(32_000), format="vtt"))  # 8x
     assert growth(t_small, t_large, 8) < 3.0, (
         f"cue merging scales super-linearly: {t_small:.3f}s -> {t_large:.3f}s"
     )
@@ -79,8 +89,8 @@ def test_chunking_a_very_long_single_turn_is_not_quadratic():
         turns = [Turn(text=SENTENCE * n, speaker="A", index=0)]
         return chunk(turns, target=2000)
 
-    _, t_small = timed(lambda: run(500))
-    _, t_large = timed(lambda: run(4000))  # 8x
+    _, t_small = timed(lambda: run(2000))
+    _, t_large = timed(lambda: run(16000))  # 8x
     assert growth(t_small, t_large, 8) < 3.0, (
         f"splitting a long turn scales super-linearly: {t_small:.3f}s -> {t_large:.3f}s"
     )
