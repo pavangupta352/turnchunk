@@ -4,6 +4,33 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.4.0] — 2026-08-31
+
+Prompted by a comment on the launch post pointing out that a perfectly chunked
+turn can still carry the wrong name if the diarizer upstream flipped speakers.
+True, and out of scope to *fix* — but not to *detect*.
+
+### Added
+- `diarization_warnings()` and `turnchunk lint`: flag turn boundaries that look
+  like diarizer mistakes, from timing and text alone, with no model. Three
+  signals — a mid-utterance flip (speaker change with no pause where the
+  sentence continues), flapping (a run of very short turns bouncing between
+  two labels), and ghost speakers (a generic label with a handful of words).
+  Each finding carries a confidence and a reason. Labels are never changed.
+- The false-positive traps are handled deliberately: real back-channel is not
+  flapping (only one side is short), a named person who spoke once is never a
+  ghost, and a lowercase continuation only raises confidence on transcripts
+  that use capitals at all.
+- `--fail-on {high,medium,low}` makes `lint` a CI gate.
+- Ported to TypeScript and covered by the shared conformance corpus, so both
+  languages make identical decisions.
+
+### Confirmed, not changed
+- The other half of that comment — long monologues that exceed the budget
+  need the speaker re-stamped on the continuation — was already handled and
+  is tested: every piece keeps its speaker, carries a part index, and gets
+  interpolated timestamps flagged as estimates.
+
 ## [0.3.0] — 2026-08-31
 
 Found by attacking the published library with hostile input. None of these

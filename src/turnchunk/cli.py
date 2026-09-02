@@ -18,6 +18,7 @@ from typing import List, Optional, Sequence
 
 from . import __version__
 from .chunker import DEFAULT_TEMPLATE, chunk, render_turn
+from .diagnostics import diarization_warnings
 from .naive import recursive_split
 from .parsers import FORMATS, UnknownFormatError, detect_format, parse_file
 from .render import format_timestamp, to_context
@@ -361,6 +362,47 @@ def cmd_report(args) -> int:
     return 1 if (problems and args.fail_on_issues) else 0
 
 
+# ------------------------------------------------------------------ lint ----
+
+_LEVEL = {"high": 3, "medium": 2, "low": 1}
+
+
+def cmd_lint(args) -> int:
+    """Flag turn boundaries that look like diarizer mistakes."""
+    s = Style(None if args.color == "auto" else args.color == "always")
+    t = _load(args.file, args)
+    findings = diarization_warnings(
+        t.turns,
+        max_gap_ms=args.max_gap_ms,
+        flap_max_words=args.flap_max_words,
+        flap_min_run=args.flap_min_run,
+    )
+    if args.json:
+        print(json.dumps([f.to_dict() for f in findings], indent=2, ensure_ascii=False))
+    else:
+        print()
+        if not findings:
+            print("  " + s.green("no diarization warnings") + s.dim(
+                "  (nothing looked wrong; that is not the same as the labels being right)"))
+        colour = {"high": s.red, "medium": s.yellow, "low": s.dim}
+        for f in findings:
+            where = "turn {}".format(f.start_index) if f.start_index == f.end_index \
+                else "turns {}-{}".format(f.start_index, f.end_index)
+            at = " @" + format_timestamp(f.start_ms) if f.start_ms is not None else ""
+            print("  {} {:<20} {}{}".format(
+                colour[f.confidence]("[{}]".format(f.confidence).ljust(8)),
+                f.kind, s.dim(where + at), ""))
+            for line in _wrap(f.reason, 84):
+                print("           " + line)
+        print()
+        print("  {} finding(s)  ".format(len(findings)) + s.dim(
+            "heuristics only -- labels are never changed; raw_speaker keeps the original"))
+        print()
+    if args.fail_on and any(_LEVEL[f.confidence] >= _LEVEL[args.fail_on] for f in findings):
+        return 1
+    return 0
+
+
 # --------------------------------------------------------------- formats ----
 
 
@@ -475,6 +517,18 @@ def build_parser() -> argparse.ArgumentParser:
     )
     common(sp)
     sp.set_defaults(func=cmd_report)
+
+    sp = sub.add_parser("lint", help="flag likely diarizer mistakes (flips, flapping, ghosts)")
+    sp.add_argument("file")
+    sp.add_argument("--json", action="store_true")
+    sp.add_argument("--max-gap-ms", type=int, default=300,
+                    help="a speaker change with less silence than this, mid-sentence, is a flip")
+    sp.add_argument("--flap-max-words", type=int, default=4)
+    sp.add_argument("--flap-min-run", type=int, default=4)
+    sp.add_argument("--fail-on", choices=("high", "medium", "low"),
+                    help="exit non-zero if any finding is at or above this confidence")
+    common(sp, with_target=False)
+    sp.set_defaults(func=cmd_lint)
 
     sp = sub.add_parser("detect", help="print the detected format for each file")
     sp.add_argument("files", nargs="+")

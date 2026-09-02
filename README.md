@@ -225,6 +225,53 @@ from turnchunk.speakers import resolve_speakers
 resolve_speakers(turns, rename={"SPEAKER_00": "Alice Chen"})
 ```
 
+## Catches diarizer mistakes it can't fix
+
+A perfectly chunked turn can still carry the wrong name, because the diarizer
+upstream got it wrong. turnchunk can't repair that — it would need the audio,
+or a model, and being model-free is the point. What it *can* do is notice the
+fingerprints a diarizer error leaves in timing and text:
+
+```console
+$ turnchunk lint meeting.vtt
+
+  [high]   mid_utterance_flip   turns 4-5 @01:02
+           'Priya Raman' stops mid-sentence and 'Marcus Bell' starts 50ms later with a
+           lowercase continuation -- likely one utterance split across two labels
+
+  [medium] flapping             turns 12-17 @03:44
+           6 consecutive turns of <= 4 words alternating between 'A' and 'B' --
+           diarizers flap like this on a single voice; real back-channel has one long side
+
+  2 finding(s)  heuristics only -- labels are never changed; raw_speaker keeps the original
+```
+
+Three signals, each labelled with a confidence:
+
+| Finding | What it looks like | Why a diarizer does it |
+|---|---|---|
+| **mid-utterance flip** | speaker changes with no pause, and the sentence continues | one utterance split in two, second half given to someone else |
+| **flapping** | a run of very short turns bouncing between the same two labels | one voice the diarizer can't settle on |
+| **ghost speaker** | a `SPEAKER_03` with a handful of words in an hour of audio | over-segmentation noise |
+
+The false-positive traps are handled on purpose. Real back-channel — one person
+talking, the other saying "mhm" — is *not* flapping, because only one side is
+short. A **named** person who spoke once is never a ghost; that's a real
+person. Fast turn-taking between finished sentences is normal conversation,
+not a flip.
+
+```python
+from turnchunk import diarization_warnings
+
+for f in diarization_warnings(turns):
+    print(f.confidence, f.kind, f.start_index, f.reason)
+```
+
+Nothing is ever changed. The labels stay exactly as the source gave them,
+`raw_speaker` preserves the original, and the caller decides. Misattribution
+is worse than a miss, and a "fix" that guesses wrong is misattribution with
+extra steps. `turnchunk lint --fail-on high` makes it a CI gate.
+
 ## Drop into your pipeline
 
 ```python
@@ -265,6 +312,7 @@ turnchunk chunk meeting.vtt --json      # chunks with full metadata
 turnchunk chunk meeting.vtt --context   # rendered for a prompt
 turnchunk stats meeting.vtt             # speakers, talk time, duration
 turnchunk speakers meeting.vtt          # resolved identity mapping
+turnchunk lint meeting.vtt --fail-on high   # flag likely diarizer mistakes
 turnchunk detect transcripts/*          # what format is this, really?
 turnchunk report transcripts/*.vtt --fail-on-issues   # CI gate
 ```
@@ -309,8 +357,8 @@ leak a literal `<i>` into the chunk text, and was only ever going to be found by
 running a real file through it.
 
 ```bash
-pip install -e ".[dev]" && pytest      # 159 Python tests
-cd js && npm ci && npm test            # 87 TypeScript conformance tests
+pip install -e ".[dev]" && pytest      # 178 Python tests
+cd js && npm ci && npm test            # 95 TypeScript conformance tests
 ```
 
 ## Scope

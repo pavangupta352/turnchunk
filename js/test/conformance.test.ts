@@ -14,7 +14,14 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
-import { buildSpeakerMap, chunk, parse, splitSentences } from "../src/index.js";
+import {
+  buildSpeakerMap,
+  chunk,
+  diarizationWarnings,
+  makeTurn,
+  parse,
+  splitSentences,
+} from "../src/index.js";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, "..", "..");
@@ -25,6 +32,22 @@ interface Corpus {
   chunk: Record<string, Array<{ options: ChunkOpts; chunks: ExpectedChunk[] }>>;
   sentences: Array<{ input: string; output: string[] }>;
   speakers: Array<{ input: string[]; output: Record<string, string> }>;
+  diagnostics: Array<{ input: CorpusTurn[]; output: ExpectedFinding[] }>;
+}
+interface CorpusTurn {
+  text: string;
+  speaker: string | null;
+  index: number;
+  start_ms: number | null;
+  end_ms: number | null;
+}
+interface ExpectedFinding {
+  kind: string;
+  start_index: number;
+  end_index: number;
+  speakers: string[];
+  confidence: string;
+  start_ms: number | null;
 }
 interface ExpectedTurn {
   text: string;
@@ -129,6 +152,31 @@ describe("speaker resolution matches Python", () => {
   corpus.speakers.forEach((c, i) => {
     it(`case ${i}: ${c.input.join(", ")}`, () => {
       expect(buildSpeakerMap(c.input)).toEqual(c.output);
+    });
+  });
+});
+
+describe("diarization diagnostics match Python", () => {
+  corpus.diagnostics.forEach((c, i) => {
+    it(`case ${i}: ${c.input.length} turns -> ${c.output.length} finding(s)`, () => {
+      const turns = c.input.map((d) =>
+        makeTurn({
+          text: d.text,
+          speaker: d.speaker,
+          index: d.index,
+          startMs: d.start_ms,
+          endMs: d.end_ms,
+        }),
+      );
+      const got = diarizationWarnings(turns).map((f) => ({
+        kind: f.kind,
+        start_index: f.startIndex,
+        end_index: f.endIndex,
+        speakers: f.speakers,
+        confidence: f.confidence,
+        start_ms: f.startMs,
+      }));
+      expect(got).toEqual(c.output);
     });
   });
 });

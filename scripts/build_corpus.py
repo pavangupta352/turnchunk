@@ -17,8 +17,10 @@ import json
 from pathlib import Path
 
 from turnchunk import chunk, parse_file
+from turnchunk.diagnostics import diarization_warnings
 from turnchunk.sentences import split_sentences
 from turnchunk.speakers import build_speaker_map
+from turnchunk.types import Turn
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "tests" / "corpus" / "conformance.json"
@@ -51,6 +53,50 @@ SENTENCE_CASES = [
     "",
 ]
 
+# Each case is a list of turn dicts; the expected output compares the decision
+# fields only. `reason` is human-facing prose and is deliberately excluded --
+# Python's "{:.1%}" and JS's toFixed(1) round differently on exact .x5
+# boundaries, and parity on English strings is not what the corpus is for.
+def _t(text, spk, i, s=None, e=None):
+    return {"text": text, "speaker": spk, "index": i, "start_ms": s, "end_ms": e}
+
+
+_LONG = [
+    _t("This is a long substantive turn about the migration plan and its timing. " * 3,
+       "SPEAKER_00", i, i * 9000, i * 9000 + 8000)
+    for i in range(20)
+]
+
+DIAGNOSTICS_CASES = [
+    # high-confidence flip
+    [_t("We agreed the renewal goes to six percent, not twelve, and", "Priya", 0, 0, 4000),
+     _t("the incident report gets attached so it reads as goodwill.", "Marcus", 1, 4050, 8000),
+     _t("Fine by me.", "Priya", 2, 9000, 10000)],
+    # real pause -> nothing
+    [_t("We agreed six percent, not twelve, and", "Priya", 0, 0, 4000),
+     _t("the report gets attached.", "Marcus", 1, 6000, 8000)],
+    # lowercase ASR -> medium
+    [_t("we agreed six percent not twelve and", "priya", 0, 0, 4000),
+     _t("the report gets attached", "marcus", 1, 4050, 8000),
+     _t("fine by me", "priya", 2, 9000, 10000)],
+    # flapping
+    [_t(w, sp, i, i * 800, i * 800 + 700) for i, (sp, w) in enumerate(
+        [("A", "yeah so"), ("B", "the thing"), ("A", "is that"),
+         ("B", "we need"), ("A", "to move"), ("B", "it thursday")])],
+    # back-channel -> nothing
+    [_t("So the migration will take a month because of the data volume", "Alice", 0, 0, 5000),
+     _t("mhm", "Bob", 1, 5100, 5300),
+     _t("and we need legal sign-off before anything moves region", "Alice", 2, 5400, 10000),
+     _t("yeah", "Bob", 3, 10100, 10300),
+     _t("so realistically Thursday is the earliest.", "Alice", 4, 10400, 13000),
+     _t("ok", "Bob", 5, 13100, 13300)],
+    # ghost (generic) vs named one-liner
+    [*_LONG, _t("uh yes", "SPEAKER_03", 20, 180000, 180500)],
+    [*_LONG, _t("uh yes", "Dana Okafor", 20, 180000, 180500)],
+    # everything at once, to check ordering
+    [*_LONG[:5], _t("and then the plan was to", "SPEAKER_00", 5, 45000, 53000), _t("move the whole thing to Thursday.", "SPEAKER_01", 6, 53050, 62000), *_LONG[7:], _t("uh yes", "SPEAKER_03", 20, 180000, 180500)],
+]
+
 SPEAKER_CASES = [
     ["John", "john", "JOHN"],
     ["John", "John Smith", "JOHN SMITH"],
@@ -71,6 +117,7 @@ def main() -> None:
         "chunk": {},
         "sentences": [],
         "speakers": [],
+        "diagnostics": [],
     }
 
     for name in FIXTURES:
@@ -116,6 +163,23 @@ def main() -> None:
     for names in SPEAKER_CASES:
         corpus["speakers"].append({"input": names, "output": build_speaker_map(names)})
 
+    for turns in DIAGNOSTICS_CASES:
+        findings = diarization_warnings([Turn(**d) for d in turns])
+        corpus["diagnostics"].append({
+            "input": turns,
+            "output": [
+                {
+                    "kind": f.kind,
+                    "start_index": f.start_index,
+                    "end_index": f.end_index,
+                    "speakers": f.speakers,
+                    "confidence": f.confidence,
+                    "start_ms": f.start_ms,
+                }
+                for f in findings
+            ],
+        })
+
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(corpus, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
@@ -123,7 +187,8 @@ def main() -> None:
     n_turns = sum(len(v["turns"]) for v in corpus["parse"].values())
     print(f"{OUT.relative_to(ROOT)}")
     print(f"  {len(FIXTURES)} fixtures -> {n_turns} turns, {n_chunks} chunks")
-    print(f"  {len(SENTENCE_CASES)} sentence cases, {len(SPEAKER_CASES)} speaker cases")
+    print(f"  {len(SENTENCE_CASES)} sentence cases, {len(SPEAKER_CASES)} speaker cases, "
+          f"{len(DIAGNOSTICS_CASES)} diagnostics cases")
     print(f"  {OUT.stat().st_size / 1024:.0f} KB")
 
 

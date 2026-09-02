@@ -16,7 +16,7 @@ from pathlib import Path
 
 import pytest
 
-from turnchunk import chunk, parse_file
+from turnchunk import Turn, chunk, diarization_warnings, parse_file
 from turnchunk.sentences import split_sentences
 from turnchunk.speakers import build_speaker_map
 
@@ -71,3 +71,15 @@ def test_sentences_match_corpus():
 def test_speakers_match_corpus():
     for case in CORPUS["speakers"]:
         assert build_speaker_map(case["input"]) == case["output"]
+
+
+def test_diagnostics_match_corpus():
+    for case in CORPUS["diagnostics"]:
+        got = [
+            {
+                "kind": f.kind, "start_index": f.start_index, "end_index": f.end_index,
+                "speakers": f.speakers, "confidence": f.confidence, "start_ms": f.start_ms,
+            }
+            for f in diarization_warnings([Turn(**d) for d in case["input"]])
+        ]
+        assert got == case["output"]

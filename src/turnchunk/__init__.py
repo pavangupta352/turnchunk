@@ -14,6 +14,7 @@ Zero dependencies. Every chunk boundary falls on a speaker turn boundary.
 from __future__ import annotations
 
 from .chunker import chunk, render_turn, split_oversized_turn
+from .diagnostics import Finding, diarization_warnings
 from .parsers import (
     FORMATS,
     UnknownFormatError,
@@ -24,17 +25,19 @@ from .parsers import (
 from .sentences import split_sentences
 from .types import Chunk, Transcript, Turn
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"
 
 __all__ = [
     "FORMATS",
     "Chunk",
+    "Finding",
     "Transcript",
     "Turn",
     "UnknownFormatError",
     "__version__",
     "chunk",
     "detect_format",
+    "diarization_warnings",
     "parse",
     "parse_file",
     "render_turn",

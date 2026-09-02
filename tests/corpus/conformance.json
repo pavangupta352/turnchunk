@@ -1646,5 +1646,797 @@
         "JOSÉ": "José"
       }
     }
+  ],
+  "diagnostics": [
+    {
+      "input": [
+        {
+          "text": "We agreed the renewal goes to six percent, not twelve, and",
+          "speaker": "Priya",
+          "index": 0,
+          "start_ms": 0,
+          "end_ms": 4000
+        },
+        {
+          "text": "the incident report gets attached so it reads as goodwill.",
+          "speaker": "Marcus",
+          "index": 1,
+          "start_ms": 4050,
+          "end_ms": 8000
+        },
+        {
+          "text": "Fine by me.",
+          "speaker": "Priya",
+          "index": 2,
+          "start_ms": 9000,
+          "end_ms": 10000
+        }
+      ],
+      "output": [
+        {
+          "kind": "mid_utterance_flip",
+          "start_index": 0,
+          "end_index": 1,
+          "speakers": [
+            "Priya",
+            "Marcus"
+          ],
+          "confidence": "high",
+          "start_ms": 4050
+        }
+      ]
+    },
+    {
+      "input": [
+        {
+          "text": "We agreed six percent, not twelve, and",
+          "speaker": "Priya",
+          "index": 0,
+          "start_ms": 0,
+          "end_ms": 4000
+        },
+        {
+          "text": "the report gets attached.",
+          "speaker": "Marcus",
+          "index": 1,
+          "start_ms": 6000,
+          "end_ms": 8000
+        }
+      ],
+      "output": []
+    },
+    {
+      "input": [
+        {
+          "text": "we agreed six percent not twelve and",
+          "speaker": "priya",
+          "index": 0,
+          "start_ms": 0,
+          "end_ms": 4000
+        },
+        {
+          "text": "the report gets attached",
+          "speaker": "marcus",
+          "index": 1,
+          "start_ms": 4050,
+          "end_ms": 8000
+        },
+        {
+          "text": "fine by me",
+          "speaker": "priya",
+          "index": 2,
+          "start_ms": 9000,
+          "end_ms": 10000
+        }
+      ],
+      "output": [
+        {
+          "kind": "mid_utterance_flip",
+          "start_index": 0,
+          "end_index": 1,
+          "speakers": [
+            "priya",
+            "marcus"
+          ],
+          "confidence": "medium",
+          "start_ms": 4050
+        }
+      ]
+    },
+    {
+      "input": [
+        {
+          "text": "yeah so",
+          "speaker": "A",
+          "index": 0,
+          "start_ms": 0,
+          "end_ms": 700
+        },
+        {
+          "text": "the thing",
+          "speaker": "B",
+          "index": 1,
+          "start_ms": 800,
+          "end_ms": 1500
+        },
+        {
+          "text": "is that",
+          "speaker": "A",
+          "index": 2,
+          "start_ms": 1600,
+          "end_ms": 2300
+        },
+        {
+          "text": "we need",
+          "speaker": "B",
+          "index": 3,
+          "start_ms": 2400,
+          "end_ms": 3100
+        },
+        {
+          "text": "to move",
+          "speaker": "A",
+          "index": 4,
+          "start_ms": 3200,
+          "end_ms": 3900
+        },
+        {
+          "text": "it thursday",
+          "speaker": "B",
+          "index": 5,
+          "start_ms": 4000,
+          "end_ms": 4700
+        }
+      ],
+      "output": [
+        {
+          "kind": "flapping",
+          "start_index": 0,
+          "end_index": 5,
+          "speakers": [
+            "A",
+            "B"
+          ],
+          "confidence": "medium",
+          "start_ms": 0
+        },
+        {
+          "kind": "mid_utterance_flip",
+          "start_index": 0,
+          "end_index": 1,
+          "speakers": [
+            "A",
+            "B"
+          ],
+          "confidence": "medium",
+          "start_ms": 800
+        },
+        {
+          "kind": "mid_utterance_flip",
+          "start_index": 1,
+          "end_index": 2,
+          "speakers": [
+            "B",
+            "A"
+          ],
+          "confidence": "medium",
+          "start_ms": 1600
+        },
+        {
+          "kind": "mid_utterance_flip",
+          "start_index": 2,
+          "end_index": 3,
+          "speakers": [
+            "A",
+            "B"
+          ],
+          "confidence": "medium",
+          "start_ms": 2400
+        },
+        {
+          "kind": "mid_utterance_flip",
+          "start_index": 3,
+          "end_index": 4,
+          "speakers": [
+            "B",
+            "A"
+          ],
+          "confidence": "medium",
+          "start_ms": 3200
+        },
+        {
+          "kind": "mid_utterance_flip",
+          "start_index": 4,
+          "end_index": 5,
+          "speakers": [
+            "A",
+            "B"
+          ],
+          "confidence": "medium",
+          "start_ms": 4000
+        }
+      ]
+    },
+    {
+      "input": [
+        {
+          "text": "So the migration will take a month because of the data volume",
+          "speaker": "Alice",
+          "index": 0,
+          "start_ms": 0,
+          "end_ms": 5000
+        },
+        {
+          "text": "mhm",
+          "speaker": "Bob",
+          "index": 1,
+          "start_ms": 5100,
+          "end_ms": 5300
+        },
+        {
+          "text": "and we need legal sign-off before anything moves region",
+          "speaker": "Alice",
+          "index": 2,
+          "start_ms": 5400,
+          "end_ms": 10000
+        },
+        {
+          "text": "yeah",
+          "speaker": "Bob",
+          "index": 3,
+          "start_ms": 10100,
+          "end_ms": 10300
+        },
+        {
+          "text": "so realistically Thursday is the earliest.",
+          "speaker": "Alice",
+          "index": 4,
+          "start_ms": 10400,
+          "end_ms": 13000
+        },
+        {
+          "text": "ok",
+          "speaker": "Bob",
+          "index": 5,
+          "start_ms": 13100,
+          "end_ms": 13300
+        }
+      ],
+      "output": [
+        {
+          "kind": "mid_utterance_flip",
+          "start_index": 0,
+          "end_index": 1,
+          "speakers": [
+            "Alice",
+            "Bob"
+          ],
+          "confidence": "medium",
+          "start_ms": 5100
+        },
+        {
+          "kind": "mid_utterance_flip",
+          "start_index": 1,
+          "end_index": 2,
+          "speakers": [
+            "Bob",
+            "Alice"
+          ],
+          "confidence": "medium",
+          "start_ms": 5400
+        },
+        {
+          "kind": "mid_utterance_flip",
+          "start_index": 2,
+          "end_index": 3,
+          "speakers": [
+            "Alice",
+            "Bob"
+          ],
+          "confidence": "medium",
+          "start_ms": 10100
+        },
+        {
+          "kind": "mid_utterance_flip",
+          "start_index": 3,
+          "end_index": 4,
+          "speakers": [
+            "Bob",
+            "Alice"
+          ],
+          "confidence": "medium",
+          "start_ms": 10400
+        }
+      ]
+    },
+    {
+      "input": [
+        {
+          "text": "This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. ",
+          "speaker": "SPEAKER_00",
+          "index": 0,
+          "start_ms": 0,
+          "end_ms": 8000
+        },
+        {
+          "text": "This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. ",
+          "speaker": "SPEAKER_00",
+          "index": 1,
+          "start_ms": 9000,
+          "end_ms": 17000
+        },
+        {
+          "text": "This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. ",
+          "speaker": "SPEAKER_00",
+          "index": 2,
+          "start_ms": 18000,
+          "end_ms": 26000
+        },
+        {
+          "text": "This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. ",
+          "speaker": "SPEAKER_00",
+          "index": 3,
+          "start_ms": 27000,
+          "end_ms": 35000
+        },
+        {
+          "text": "This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. ",
+          "speaker": "SPEAKER_00",
+          "index": 4,
+          "start_ms": 36000,
+          "end_ms": 44000
+        },
+        {
+          "text": "This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. ",
+          "speaker": "SPEAKER_00",
+          "index": 5,
+          "start_ms": 45000,
+          "end_ms": 53000
+        },
+        {
+          "text": "This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. ",
+          "speaker": "SPEAKER_00",
+          "index": 6,
+          "start_ms": 54000,
+          "end_ms": 62000
+        },
+        {
+          "text": "This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. ",
+          "speaker": "SPEAKER_00",
+          "index": 7,
+          "start_ms": 63000,
+          "end_ms": 71000
+        },
+        {
+          "text": "This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. ",
+          "speaker": "SPEAKER_00",
+          "index": 8,
+          "start_ms": 72000,
+          "end_ms": 80000
+        },
+        {
+          "text": "This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. ",
+          "speaker": "SPEAKER_00",
+          "index": 9,
+          "start_ms": 81000,
+          "end_ms": 89000
+        },
+        {
+          "text": "This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. ",
+          "speaker": "SPEAKER_00",
+          "index": 10,
+          "start_ms": 90000,
+          "end_ms": 98000
+        },
+        {
+          "text": "This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. ",
+          "speaker": "SPEAKER_00",
+          "index": 11,
+          "start_ms": 99000,
+          "end_ms": 107000
+        },
+        {
+          "text": "This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. ",
+          "speaker": "SPEAKER_00",
+          "index": 12,
+          "start_ms": 108000,
+          "end_ms": 116000
+        },
+        {
+          "text": "This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. ",
+          "speaker": "SPEAKER_00",
+          "index": 13,
+          "start_ms": 117000,
+          "end_ms": 125000
+        },
+        {
+          "text": "This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. ",
+          "speaker": "SPEAKER_00",
+          "index": 14,
+          "start_ms": 126000,
+          "end_ms": 134000
+        },
+        {
+          "text": "This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. ",
+          "speaker": "SPEAKER_00",
+          "index": 15,
+          "start_ms": 135000,
+          "end_ms": 143000
+        },
+        {
+          "text": "This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. ",
+          "speaker": "SPEAKER_00",
+          "index": 16,
+          "start_ms": 144000,
+          "end_ms": 152000
+        },
+        {
+          "text": "This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. ",
+          "speaker": "SPEAKER_00",
+          "index": 17,
+          "start_ms": 153000,
+          "end_ms": 161000
+        },
+        {
+          "text": "This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. ",
+          "speaker": "SPEAKER_00",
+          "index": 18,
+          "start_ms": 162000,
+          "end_ms": 170000
+        },
+        {
+          "text": "This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. ",
+          "speaker": "SPEAKER_00",
+          "index": 19,
+          "start_ms": 171000,
+          "end_ms": 179000
+        },
+        {
+          "text": "uh yes",
+          "speaker": "SPEAKER_03",
+          "index": 20,
+          "start_ms": 180000,
+          "end_ms": 180500
+        }
+      ],
+      "output": [
+        {
+          "kind": "ghost_speaker",
+          "start_index": 20,
+          "end_index": 20,
+          "speakers": [
+            "SPEAKER_03"
+          ],
+          "confidence": "low",
+          "start_ms": 180000
+        }
+      ]
+    },
+    {
+      "input": [
+        {
+          "text": "This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. ",
+          "speaker": "SPEAKER_00",
+          "index": 0,
+          "start_ms": 0,
+          "end_ms": 8000
+        },
+        {
+          "text": "This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. ",
+          "speaker": "SPEAKER_00",
+          "index": 1,
+          "start_ms": 9000,
+          "end_ms": 17000
+        },
+        {
+          "text": "This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. ",
+          "speaker": "SPEAKER_00",
+          "index": 2,
+          "start_ms": 18000,
+          "end_ms": 26000
+        },
+        {
+          "text": "This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. ",
+          "speaker": "SPEAKER_00",
+          "index": 3,
+          "start_ms": 27000,
+          "end_ms": 35000
+        },
+        {
+          "text": "This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. ",
+          "speaker": "SPEAKER_00",
+          "index": 4,
+          "start_ms": 36000,
+          "end_ms": 44000
+        },
+        {
+          "text": "This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. ",
+          "speaker": "SPEAKER_00",
+          "index": 5,
+          "start_ms": 45000,
+          "end_ms": 53000
+        },
+        {
+          "text": "This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. ",
+          "speaker": "SPEAKER_00",
+          "index": 6,
+          "start_ms": 54000,
+          "end_ms": 62000
+        },
+        {
+          "text": "This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. ",
+          "speaker": "SPEAKER_00",
+          "index": 7,
+          "start_ms": 63000,
+          "end_ms": 71000
+        },
+        {
+          "text": "This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. ",
+          "speaker": "SPEAKER_00",
+          "index": 8,
+          "start_ms": 72000,
+          "end_ms": 80000
+        },
+        {
+          "text": "This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. ",
+          "speaker": "SPEAKER_00",
+          "index": 9,
+          "start_ms": 81000,
+          "end_ms": 89000
+        },
+        {
+          "text": "This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. ",
+          "speaker": "SPEAKER_00",
+          "index": 10,
+          "start_ms": 90000,
+          "end_ms": 98000
+        },
+        {
+          "text": "This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. ",
+          "speaker": "SPEAKER_00",
+          "index": 11,
+          "start_ms": 99000,
+          "end_ms": 107000
+        },
+        {
+          "text": "This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. ",
+          "speaker": "SPEAKER_00",
+          "index": 12,
+          "start_ms": 108000,
+          "end_ms": 116000
+        },
+        {
+          "text": "This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. ",
+          "speaker": "SPEAKER_00",
+          "index": 13,
+          "start_ms": 117000,
+          "end_ms": 125000
+        },
+        {
+          "text": "This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. ",
+          "speaker": "SPEAKER_00",
+          "index": 14,
+          "start_ms": 126000,
+          "end_ms": 134000
+        },
+        {
+          "text": "This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. ",
+          "speaker": "SPEAKER_00",
+          "index": 15,
+          "start_ms": 135000,
+          "end_ms": 143000
+        },
+        {
+          "text": "This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. ",
+          "speaker": "SPEAKER_00",
+          "index": 16,
+          "start_ms": 144000,
+          "end_ms": 152000
+        },
+        {
+          "text": "This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. ",
+          "speaker": "SPEAKER_00",
+          "index": 17,
+          "start_ms": 153000,
+          "end_ms": 161000
+        },
+        {
+          "text": "This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. ",
+          "speaker": "SPEAKER_00",
+          "index": 18,
+          "start_ms": 162000,
+          "end_ms": 170000
+        },
+        {
+          "text": "This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. ",
+          "speaker": "SPEAKER_00",
+          "index": 19,
+          "start_ms": 171000,
+          "end_ms": 179000
+        },
+        {
+          "text": "uh yes",
+          "speaker": "Dana Okafor",
+          "index": 20,
+          "start_ms": 180000,
+          "end_ms": 180500
+        }
+      ],
+      "output": []
+    },
+    {
+      "input": [
+        {
+          "text": "This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. ",
+          "speaker": "SPEAKER_00",
+          "index": 0,
+          "start_ms": 0,
+          "end_ms": 8000
+        },
+        {
+          "text": "This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. ",
+          "speaker": "SPEAKER_00",
+          "index": 1,
+          "start_ms": 9000,
+          "end_ms": 17000
+        },
+        {
+          "text": "This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. ",
+          "speaker": "SPEAKER_00",
+          "index": 2,
+          "start_ms": 18000,
+          "end_ms": 26000
+        },
+        {
+          "text": "This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. ",
+          "speaker": "SPEAKER_00",
+          "index": 3,
+          "start_ms": 27000,
+          "end_ms": 35000
+        },
+        {
+          "text": "This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. ",
+          "speaker": "SPEAKER_00",
+          "index": 4,
+          "start_ms": 36000,
+          "end_ms": 44000
+        },
+        {
+          "text": "and then the plan was to",
+          "speaker": "SPEAKER_00",
+          "index": 5,
+          "start_ms": 45000,
+          "end_ms": 53000
+        },
+        {
+          "text": "move the whole thing to Thursday.",
+          "speaker": "SPEAKER_01",
+          "index": 6,
+          "start_ms": 53050,
+          "end_ms": 62000
+        },
+        {
+          "text": "This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. ",
+          "speaker": "SPEAKER_00",
+          "index": 7,
+          "start_ms": 63000,
+          "end_ms": 71000
+        },
+        {
+          "text": "This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. ",
+          "speaker": "SPEAKER_00",
+          "index": 8,
+          "start_ms": 72000,
+          "end_ms": 80000
+        },
+        {
+          "text": "This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. ",
+          "speaker": "SPEAKER_00",
+          "index": 9,
+          "start_ms": 81000,
+          "end_ms": 89000
+        },
+        {
+          "text": "This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. ",
+          "speaker": "SPEAKER_00",
+          "index": 10,
+          "start_ms": 90000,
+          "end_ms": 98000
+        },
+        {
+          "text": "This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. ",
+          "speaker": "SPEAKER_00",
+          "index": 11,
+          "start_ms": 99000,
+          "end_ms": 107000
+        },
+        {
+          "text": "This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. ",
+          "speaker": "SPEAKER_00",
+          "index": 12,
+          "start_ms": 108000,
+          "end_ms": 116000
+        },
+        {
+          "text": "This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. ",
+          "speaker": "SPEAKER_00",
+          "index": 13,
+          "start_ms": 117000,
+          "end_ms": 125000
+        },
+        {
+          "text": "This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. ",
+          "speaker": "SPEAKER_00",
+          "index": 14,
+          "start_ms": 126000,
+          "end_ms": 134000
+        },
+        {
+          "text": "This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. ",
+          "speaker": "SPEAKER_00",
+          "index": 15,
+          "start_ms": 135000,
+          "end_ms": 143000
+        },
+        {
+          "text": "This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. ",
+          "speaker": "SPEAKER_00",
+          "index": 16,
+          "start_ms": 144000,
+          "end_ms": 152000
+        },
+        {
+          "text": "This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. ",
+          "speaker": "SPEAKER_00",
+          "index": 17,
+          "start_ms": 153000,
+          "end_ms": 161000
+        },
+        {
+          "text": "This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. ",
+          "speaker": "SPEAKER_00",
+          "index": 18,
+          "start_ms": 162000,
+          "end_ms": 170000
+        },
+        {
+          "text": "This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. This is a long substantive turn about the migration plan and its timing. ",
+          "speaker": "SPEAKER_00",
+          "index": 19,
+          "start_ms": 171000,
+          "end_ms": 179000
+        },
+        {
+          "text": "uh yes",
+          "speaker": "SPEAKER_03",
+          "index": 20,
+          "start_ms": 180000,
+          "end_ms": 180500
+        }
+      ],
+      "output": [
+        {
+          "kind": "mid_utterance_flip",
+          "start_index": 5,
+          "end_index": 6,
+          "speakers": [
+            "SPEAKER_00",
+            "SPEAKER_01"
+          ],
+          "confidence": "high",
+          "start_ms": 53050
+        },
+        {
+          "kind": "ghost_speaker",
+          "start_index": 20,
+          "end_index": 20,
+          "speakers": [
+            "SPEAKER_03"
+          ],
+          "confidence": "low",
+          "start_ms": 180000
+        }
+      ]
+    }
   ]
 }

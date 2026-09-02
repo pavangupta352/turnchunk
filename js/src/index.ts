@@ -17,7 +17,7 @@
  * conformance corpus.
  */
 
-export const VERSION = "0.3.0";
+export const VERSION = "0.4.0";
 
 export {
   DEFAULT_SEPARATOR,
@@ -57,3 +57,6 @@ export { Chunk, Transcript, makeTurn, turnsFrom } from "./types.js";
 export type { Turn, TurnsLike } from "./types.js";
 
 export { formatTimestamp, toContext, toContextAll } from "./render.js";
+
+export { diarizationWarnings } from "./diagnostics.js";
+export type { Confidence, DiagnosticsOptions, Finding, FindingKind } from "./diagnostics.js";
