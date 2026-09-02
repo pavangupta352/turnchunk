@@ -48,6 +48,7 @@ interface ExpectedFinding {
   speakers: string[];
   confidence: string;
   start_ms: number | null;
+  end_ms: number | null;
 }
 interface ExpectedTurn {
   text: string;
@@ -175,6 +176,7 @@ describe("diarization diagnostics match Python", () => {
         speakers: f.speakers,
         confidence: f.confidence,
         start_ms: f.startMs,
+        end_ms: f.endMs,
       }));
       expect(got).toEqual(c.output);
     });

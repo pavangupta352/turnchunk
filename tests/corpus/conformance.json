@@ -1682,7 +1682,8 @@
             "Marcus"
           ],
           "confidence": "high",
-          "start_ms": 4050
+          "start_ms": 0,
+          "end_ms": 8000
         }
       ]
     },
@@ -1739,7 +1740,8 @@
             "marcus"
           ],
           "confidence": "medium",
-          "start_ms": 4050
+          "start_ms": 0,
+          "end_ms": 8000
         }
       ]
     },
@@ -1798,7 +1800,8 @@
             "B"
           ],
           "confidence": "medium",
-          "start_ms": 0
+          "start_ms": 0,
+          "end_ms": 4700
         },
         {
           "kind": "mid_utterance_flip",
@@ -1809,7 +1812,8 @@
             "B"
           ],
           "confidence": "medium",
-          "start_ms": 800
+          "start_ms": 0,
+          "end_ms": 1500
         },
         {
           "kind": "mid_utterance_flip",
@@ -1820,7 +1824,8 @@
             "A"
           ],
           "confidence": "medium",
-          "start_ms": 1600
+          "start_ms": 800,
+          "end_ms": 2300
         },
         {
           "kind": "mid_utterance_flip",
@@ -1831,7 +1836,8 @@
             "B"
           ],
           "confidence": "medium",
-          "start_ms": 2400
+          "start_ms": 1600,
+          "end_ms": 3100
         },
         {
           "kind": "mid_utterance_flip",
@@ -1842,7 +1848,8 @@
             "A"
           ],
           "confidence": "medium",
-          "start_ms": 3200
+          "start_ms": 2400,
+          "end_ms": 3900
         },
         {
           "kind": "mid_utterance_flip",
@@ -1853,7 +1860,8 @@
             "B"
           ],
           "confidence": "medium",
-          "start_ms": 4000
+          "start_ms": 3200,
+          "end_ms": 4700
         }
       ]
     },
@@ -1912,7 +1920,8 @@
             "Bob"
           ],
           "confidence": "medium",
-          "start_ms": 5100
+          "start_ms": 0,
+          "end_ms": 5300
         },
         {
           "kind": "mid_utterance_flip",
@@ -1923,7 +1932,8 @@
             "Alice"
           ],
           "confidence": "medium",
-          "start_ms": 5400
+          "start_ms": 5100,
+          "end_ms": 10000
         },
         {
           "kind": "mid_utterance_flip",
@@ -1934,7 +1944,8 @@
             "Bob"
           ],
           "confidence": "medium",
-          "start_ms": 10100
+          "start_ms": 5400,
+          "end_ms": 10300
         },
         {
           "kind": "mid_utterance_flip",
@@ -1945,7 +1956,8 @@
             "Alice"
           ],
           "confidence": "medium",
-          "start_ms": 10400
+          "start_ms": 10100,
+          "end_ms": 13000
         }
       ]
     },
@@ -2108,7 +2120,8 @@
             "SPEAKER_03"
           ],
           "confidence": "low",
-          "start_ms": 180000
+          "start_ms": 180000,
+          "end_ms": 180500
         }
       ]
     },
@@ -2424,7 +2437,8 @@
             "SPEAKER_01"
           ],
           "confidence": "high",
-          "start_ms": 53050
+          "start_ms": 45000,
+          "end_ms": 62000
         },
         {
           "kind": "ghost_speaker",
@@ -2434,7 +2448,8 @@
             "SPEAKER_03"
           ],
           "confidence": "low",
-          "start_ms": 180000
+          "start_ms": 180000,
+          "end_ms": 180500
         }
       ]
     }

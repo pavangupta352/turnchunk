@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "turnchunk"
-version = "0.4.0"
+version = "0.4.1"
 description = "Chunking that understands who is speaking. Parse any transcript, chunk it without ever splitting a speaker turn."
 readme = "README.md"
 requires-python = ">=3.9"

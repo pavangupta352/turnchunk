@@ -272,6 +272,18 @@ Nothing is ever changed. The labels stay exactly as the source gave them,
 is worse than a miss, and a "fix" that guesses wrong is misattribution with
 extra steps. `turnchunk lint --fail-on high` makes it a CI gate.
 
+**Hand the windows to something that has the audio.** Every timed finding is
+a closed window, `start_ms`–`end_ms`, covering every turn it names. A pipeline
+that *can* re-diarize doesn't have to redo the whole file — it re-checks just
+the flagged regions:
+
+```console
+$ turnchunk lint meeting.vtt --json
+[{"kind": "mid_utterance_flip", "start_ms": 62000, "end_ms": 71400, ...}]
+```
+
+turnchunk finds the suspects cheaply; whatever owns the audio confirms them.
+
 ## Drop into your pipeline
 
 ```python

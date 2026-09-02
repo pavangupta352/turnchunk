@@ -78,7 +78,8 @@ def test_diagnostics_match_corpus():
         got = [
             {
                 "kind": f.kind, "start_index": f.start_index, "end_index": f.end_index,
-                "speakers": f.speakers, "confidence": f.confidence, "start_ms": f.start_ms,
+                "speakers": f.speakers, "confidence": f.confidence,
+                "start_ms": f.start_ms, "end_ms": f.end_ms,
             }
             for f in diarization_warnings([Turn(**d) for d in case["input"]])
         ]

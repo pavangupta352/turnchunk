@@ -37,7 +37,12 @@ export interface Finding {
   reason: string;
   /** How strongly the evidence points. */
   confidence: Confidence;
+  /**
+   * Window a consumer should re-examine. For a flip this spans both turns, so
+   * a pipeline with the audio can re-diarize exactly the suspect region.
+   */
   startMs: number | null;
+  endMs: number | null;
 }
 
 export interface DiagnosticsOptions {
@@ -124,7 +129,8 @@ export function diarizationWarnings(turns: TurnsLike, opts: DiagnosticsOptions =
       endIndex: cur.index,
       speakers: [prev.speaker, cur.speaker],
       confidence: continues ? "high" : "medium",
-      startMs: cur.startMs,
+      startMs: prev.startMs,
+      endMs: cur.endMs,
       reason:
         `${pyRepr(prev.speaker)} stops mid-sentence and ${pyRepr(cur.speaker)} ` +
         `starts ${Math.max(gap, 0)}ms later` +
@@ -168,6 +174,7 @@ export function diarizationWarnings(turns: TurnsLike, opts: DiagnosticsOptions =
         speakers: [a, b],
         confidence: "medium",
         startMs: items[i]!.startMs,
+        endMs: items[j - 1]!.endMs,
         reason:
           `${run} consecutive turns of <= ${flapMaxWords} words alternating between ` +
           `${pyRepr(a)} and ${pyRepr(b)} -- diarizers flap like this on a single voice; ` +
@@ -201,6 +208,7 @@ export function diarizationWarnings(turns: TurnsLike, opts: DiagnosticsOptions =
           speakers: [name],
           confidence: "low",
           startMs: ts[0]!.startMs,
+          endMs: ts[ts.length - 1]!.endMs,
           reason:
             `${pyRepr(name)} has ${ts.length} turn(s) and ${words} words, ` +
             `${formatShare(chars / totalChars)} of the transcript -- ` +

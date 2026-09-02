@@ -175,6 +175,7 @@ def main() -> None:
                     "speakers": f.speakers,
                     "confidence": f.confidence,
                     "start_ms": f.start_ms,
+                    "end_ms": f.end_ms,
                 }
                 for f in findings
             ],

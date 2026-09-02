@@ -53,6 +53,14 @@ class Finding:
     confidence: str = "medium"
     """``high`` | ``medium`` | ``low`` -- how strongly the evidence points."""
     start_ms: Optional[int] = None
+    """Start of the window a consumer should re-examine, in milliseconds.
+
+    For a flip this spans *both* turns involved, not just the boundary, so a
+    pipeline with the audio can re-diarize exactly the suspect region rather
+    than the whole file. ``None`` when the source had no timestamps.
+    """
+    end_ms: Optional[int] = None
+    """End of that window, in milliseconds. ``None`` when unknown."""
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -63,6 +71,7 @@ class Finding:
             "reason": self.reason,
             "confidence": self.confidence,
             "start_ms": self.start_ms,
+            "end_ms": self.end_ms,
         }
 
 
@@ -156,7 +165,8 @@ def diarization_warnings(
                 end_index=cur.index,
                 speakers=[prev.speaker, cur.speaker],
                 confidence="high" if continues else "medium",
-                start_ms=cur.start_ms,
+                start_ms=prev.start_ms,
+                end_ms=cur.end_ms,
                 reason=(
                     f"{prev.speaker!r} stops mid-sentence and {cur.speaker!r} "
                     f"starts {max(gap, 0)}ms later"
@@ -202,6 +212,7 @@ def diarization_warnings(
                     speakers=[a, b],
                     confidence="medium",
                     start_ms=items[i].start_ms,
+                    end_ms=items[j - 1].end_ms,
                     reason=(
                         f"{run} consecutive turns of <= {flap_max_words} words "
                         f"alternating between {a!r} and {b!r} -- diarizers flap "
@@ -235,6 +246,7 @@ def diarization_warnings(
                         speakers=[name],
                         confidence="low",
                         start_ms=ts[0].start_ms,
+                        end_ms=ts[-1].end_ms,
                         reason=(
                             f"{name!r} has {len(ts)} turn(s) and {words} words, "
                             f"{chars / total_chars:.1%} of the transcript -- "

@@ -25,7 +25,7 @@ from .parsers import (
 from .sentences import split_sentences
 from .types import Chunk, Transcript, Turn
 
-__version__ = "0.4.0"
+__version__ = "0.4.1"
 
 __all__ = [
     "FORMATS",

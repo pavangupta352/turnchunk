@@ -32,7 +32,9 @@ def test_flip_with_no_pause_and_lowercase_continuation_is_high_confidence():
     assert f[0].confidence == "high"
     assert f[0].speakers == ["Priya", "Marcus"]
     assert (f[0].start_index, f[0].end_index) == (0, 1)
-    assert f[0].start_ms == 4050
+    # The window spans both turns, so a pipeline with the audio can re-check
+    # exactly the suspect region instead of re-diarizing the whole file.
+    assert (f[0].start_ms, f[0].end_ms) == (0, 8000)
 
 
 def test_a_real_pause_is_not_a_flip():
@@ -174,7 +176,8 @@ def test_findings_serialise():
         T("the report gets attached.", "Marcus", 1, 4050, 8000),
     ])
     d = f[0].to_dict()
-    assert set(d) == {"kind", "start_index", "end_index", "speakers", "reason", "confidence", "start_ms"}
+    assert set(d) == {"kind", "start_index", "end_index", "speakers", "reason",
+                      "confidence", "start_ms", "end_ms"}
 
 
 def test_findings_are_ordered_by_position():
@@ -189,3 +192,19 @@ def test_findings_are_ordered_by_position():
 def test_accepts_a_transcript_or_a_list():
     t = parse_file("examples/renewal-call.vtt")
     assert diarization_warnings(t) == diarization_warnings(t.turns)
+
+
+def test_every_finding_is_a_usable_audio_window():
+    """The point of exposing findings: a downstream pipeline re-checks just
+    the flagged region against the audio. Every timed finding must therefore
+    carry a closed window, and it must cover every turn it names."""
+    turns = _long_meeting()
+    turns[5] = T("and then the plan was to", "SPEAKER_00", 5, 45000, 53000)
+    turns[6] = T("move the whole thing to Thursday.", "SPEAKER_01", 6, 53050, 62000)
+    turns.append(T("uh yes", "SPEAKER_03", 20, 180000, 180500))
+    for f in diarization_warnings(turns):
+        assert f.start_ms is not None and f.end_ms is not None
+        assert f.start_ms <= f.end_ms
+        covered = [t for t in turns if f.start_index <= t.index <= f.end_index]
+        assert f.start_ms <= min(t.start_ms for t in covered)
+        assert f.end_ms >= max(t.end_ms for t in covered)

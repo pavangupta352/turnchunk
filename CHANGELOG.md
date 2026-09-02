@@ -4,6 +4,25 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.4.1] — 2026-09-03
+
+Asked for by the first downstream consumer of the diagnostics: a
+transcription pipeline that wants to re-check only the flagged windows
+against the audio, instead of re-running diarization across the whole file.
+
+### Added
+- `Finding.end_ms`. Every timed finding is now a closed window
+  (`start_ms`–`end_ms`) covering every turn it names, in the library, in
+  `turnchunk lint --json`, and in the TypeScript port. A point in time is not
+  enough to hand to a pipeline; a range is.
+
+### Changed
+- For a mid-utterance flip, `start_ms` now marks the start of the *first*
+  turn involved rather than the boundary moment, so the window spans the
+  whole suspect utterance. The boundary itself is recoverable from the turn
+  indices. This is a semantic change to a field that shipped hours earlier in
+  0.4.0, called out here rather than left to be discovered.
+
 ## [0.4.0] — 2026-08-31
 
 Prompted by a comment on the launch post pointing out that a perfectly chunked
